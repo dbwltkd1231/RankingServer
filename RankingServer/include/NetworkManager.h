@@ -43,7 +43,7 @@ namespace Network
 		u_short mPort;
 		int mNumThreads;
 
-		tbb::concurrent_map<int, std::shared_ptr<Client>> mClientMap;
+		std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> mClientMap;
 		std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> mOverlappedQueue;
 
 	};

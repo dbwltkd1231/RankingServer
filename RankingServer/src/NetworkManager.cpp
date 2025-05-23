@@ -113,14 +113,15 @@ namespace Network
 			mOverlappedQueue->push(std::move(overlapped));
 		}
 
-		for (int index = 0;index < socketMax;++index)
+		mClientMap = std::make_shared<tbb::concurrent_map<int, std::shared_ptr<Client>>>();
+		for (int index = 1;index < socketMax + 1; ++index)
 		{
 			SOCKET newSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 			auto socketSharedPtr = std::make_shared<SOCKET>(newSocket);
 
 			std::shared_ptr<Client> clientSharedPtr = std::make_shared<Client>();
 			clientSharedPtr->Initialize(socketSharedPtr, index, mOverlappedQueue);
-			mClientMap.insert(std::make_pair(index, clientSharedPtr));
+			mClientMap->insert(std::make_pair(index, clientSharedPtr));
 			CreateIoCompletionPort((HANDLE)newSocket, mIOCPHandle, (ULONG_PTR)index, mNumThreads);
 		}
 
@@ -129,11 +130,13 @@ namespace Network
 
 	void NetworkManager::Ready(int sessionQueueMax)
 	{
-		for (auto& client : mClientMap)
+		for (auto& client : *mClientMap)
 		{
 			auto clientPtr = client.second;
 			clientPtr->AcceptReady(mListenSocket, mAcceptExPointer);
 		}
+
+		Utility::Debug("Network", "NetworkManager", "Client AcceptReady");
 
 		mSessionQueue = std::make_shared<Utility::LockFreeCircleQueue<std::shared_ptr<Session>>>();
 		mSessionQueue->Construct(sessionQueueMax + 1);
@@ -142,13 +145,16 @@ namespace Network
 			auto sessionPtr = std::make_shared<Session>();
 			sessionPtr->Activate();
 
-			std::thread thread([sessionPtr, this]() { sessionPtr->Process(mIOCPHandle); });
+			std::thread thread([sessionPtr, this]() { sessionPtr->Process(mIOCPHandle, mClientMap, mOverlappedQueue); });
 			thread.detach();
 
 			mSessionQueue->push(std::move(sessionPtr));
 		}
 
+		Utility::Debug("Network", "NetworkManager", "Session Process Start");
 		//redis / sql ?
+
+		Utility::Debug("Network", "NetworkManager", "Ready Success !!");
 	}
 }
 

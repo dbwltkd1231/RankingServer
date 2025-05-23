@@ -46,14 +46,69 @@ namespace Network
 			return false;
 		}
 
+		memset(mReceive_HeaderBuffer, 0, sizeof(MessageHeader));
+		memset(mReceive_BodyBuffer, 0, BUFFER_SIZE);
+
 		auto overlapped = mOverlappedQueue->pop();
 		overlapped->mOperationType = Network::OperationType::OP_ACCEPT;
+
+		MessageHeader newHeader(mSocket_ID, 0, 0);
+		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
+		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
+
+		DWORD bytesReceived = 0;
+		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->wsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
+
+		std::string log;
+		errorCode = WSAGetLastError();
+		if (result == SOCKET_ERROR && errorCode != WSA_IO_PENDING)
+		{
+			log = std::to_string(mSocket_ID) + "AcceptEx 실패! 오류 코드: " + std::to_string(errorCode);
+		}
+		else
+		{
+			log = std::to_string(mSocket_ID) + " Socket Accept Ready";
+		}
+		Utility::Debug("Network", "Client", log);
+	}
+
+	void Client::ReceiveReady()
+	{
+		int errorCode;
+		int errorCodeSize = sizeof(errorCode);
+		getsockopt(*mClientSocketPtr, SOL_SOCKET, SO_ERROR, (char*)&errorCode, &errorCodeSize);
+		if (errorCode != 0)
+		{
+			std::cerr << "Socket error detected: " << errorCode << std::endl;
+			return;
+		}
+
+		auto overlapped = mOverlappedQueue->pop();
+		overlapped->mOperationType = Network::OperationType::OP_RECV;
 
 		memset(mReceive_HeaderBuffer, 0, sizeof(MessageHeader));
 		memset(mReceive_BodyBuffer, 0, BUFFER_SIZE);
 
-		overlapped->Initialize(mReceive_HeaderBuffer, mReceive_BodyBuffer, sizeof(MessageHeader), BUFFER_SIZE);
-		DWORD bytesReceived = 0;
-		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->wsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
+		MessageHeader newHeader(mSocket_ID, 0, 0);
+		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
+		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
+
+		DWORD flags = 0;
+		int result = WSARecv(*mClientSocketPtr, overlapped->wsabuf, 2, nullptr, &flags, &*overlapped, nullptr);
+
+		std::string log;
+		errorCode = WSAGetLastError();
+		if (result == SOCKET_ERROR && errorCode != WSA_IO_PENDING)
+		{
+			log = std::to_string(mSocket_ID) + "WSARecv 실패! 오류 코드: " + std::to_string(errorCode);
+		}
+		else
+		{
+			log = std::to_string(mSocket_ID) + " Socket Receive Ready";
+		}
+
+		Utility::Debug("Network", "Client", log);
 	}
 }

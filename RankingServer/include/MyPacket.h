@@ -32,17 +32,16 @@ namespace Network
         }
     };
 
-
     // buffer을 Overlapped 구조체가 직접 가지고 있을 경우 초기화 관리가 어려운것같아 Client객체에서 관리하도록 시도하였습니다.
     struct CustomOverlapped :OVERLAPPED
     {
         WSABUF wsabuf[2];
-        MessageHeader* header;
+        SOCKET* socket;
         OperationType mOperationType;
 
         CustomOverlapped()
         {
-            header = nullptr;
+            socket = nullptr;
             wsabuf[0].buf = nullptr;
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;
@@ -52,7 +51,7 @@ namespace Network
 
         ~CustomOverlapped()
         {
-            header = nullptr;
+            socket = nullptr;
             wsabuf[0].buf = nullptr;
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;
@@ -63,20 +62,18 @@ namespace Network
         // 복사 생성자
         CustomOverlapped(const CustomOverlapped& other)
         {
-            if (other.header)
+            if (other.wsabuf[0].len > 0)
             {
-                header = other.header;
                 wsabuf[0].buf = other.wsabuf[0].buf;
                 wsabuf[0].len = other.wsabuf[0].len;
             }
             else
             {
-                header = nullptr;
                 wsabuf[0].buf = nullptr;
                 wsabuf[0].len = 0;
             }
 
-            if (other.wsabuf[1].buf != nullptr)
+            if (other.wsabuf[1].len > 0)
             {
                 wsabuf[1].buf = other.wsabuf[1].buf;
                 wsabuf[1].len = other.wsabuf[1].len;
@@ -90,10 +87,14 @@ namespace Network
             mOperationType = other.mOperationType;
         }
 
-        void Initialize(char* headerBuffer, char* bodyBuffer, ULONG headerLen, ULONG bodyLen)
+        void SetHeader(char* headerBuffer, ULONG headerLen)
         {
             wsabuf[0].buf = headerBuffer;
             wsabuf[0].len = headerLen;
+        }
+
+        void SetBody(char* bodyBuffer, ULONG bodyLen)
+        {
             wsabuf[1].buf = bodyBuffer;
             wsabuf[1].len = bodyLen;
         }
@@ -105,7 +106,6 @@ namespace Network
 
         void Clear()
         {
-            header = nullptr;
             wsabuf[0].buf = nullptr;
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;

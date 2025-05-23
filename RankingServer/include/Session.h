@@ -7,7 +7,11 @@
 #include<MSWSock.h>
 #include <windows.h>
 
+#include <oneapi/tbb/concurrent_map.h>
+
+#include "Log.h"
 #include "MyPacket.h"
+#include "Client.h"
 
 #define BUFFER_SIZE 1024
 
@@ -20,7 +24,7 @@ namespace Network
 		~Session();
 
 		void Activate();
-		void Process(HANDLE iocpHandle);
+		void Process(HANDLE iocpHandle, std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> clientMap, std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> overlappedQueue);
 		void Deactivate();
 
 	private:

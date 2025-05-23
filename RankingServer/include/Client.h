@@ -8,6 +8,7 @@
 #include<MSWSock.h>
 #include <windows.h>
 
+#include "log.h"
 #include "MyPacket.h"
 #include "LockFreeCircleQueue.h"
 
@@ -26,6 +27,7 @@ namespace Network
 			std::shared_ptr<Utility::LockFreeCircleQueue<Network::CustomOverlapped*>> overlappedQueue);
 		void Deinitialize();
 		bool AcceptReady(SOCKET& listenSocket, LPFN_ACCEPTEX& acceptExPointer);
+		void ReceiveReady();
 	private:
 		int mSocket_ID;
 		std::shared_ptr<SOCKET> mClientSocketPtr;
