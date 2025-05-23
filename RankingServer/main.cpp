@@ -1,4 +1,4 @@
-
+#pragma once
 #include <iostream>
 #include <string>
 
@@ -12,6 +12,7 @@
 int main()
 {
 	Business::RankingServer rankingServer;
+	rankingServer.DataLoad(MY_IP, REDIS_PORT_NUM);
 
 	auto receiveCallback = std::function<void(uint32_t, uint32_t, uint32_t, char*)>(
 		std::bind(&Business::RankingServer::MessageRead, std::ref(rankingServer),

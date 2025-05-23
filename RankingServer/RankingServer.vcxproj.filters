@@ -48,6 +48,9 @@
     <ClCompile Include="src\RankingServer.cpp">
       <Filter>소스 파일\Business</Filter>
     </ClCompile>
+    <ClCompile Include="src\DatabaseWorker.cpp">
+      <Filter>소스 파일\Business</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NetworkManager.h">
@@ -69,6 +72,15 @@
       <Filter>헤더 파일\Network</Filter>
     </ClInclude>
     <ClInclude Include="include\RankingServer.h">
+      <Filter>헤더 파일\Business</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DataStructure.h">
+      <Filter>헤더 파일\Business</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Converter.h">
+      <Filter>헤더 파일\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DatabaseWorker.h">
       <Filter>헤더 파일\Business</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,6 +14,11 @@ namespace Business
 
 	}
 
+	void RankingServer::DataLoad(std::string ip, int redisPortNum)
+	{
+		//mDatabaseWorker.Initalize();
+		//mDatabaseWorker.DataCaching(ip, redisPortNum);
+	}
 
 	void RankingServer::MessageRead(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)// ntohl된걸로 전달받아야함.
 	{

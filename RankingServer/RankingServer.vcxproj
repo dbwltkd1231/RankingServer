@@ -75,8 +75,8 @@
     <LibraryPath>$(ProjectDir)library\oneTBB\lib\intel64\vc14;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)library\oneTBB\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)library\oneTBB\lib\intel64\vc14;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)library\oneTBB\include;$(ProjectDir)library\hiredis;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)library\oneTBB\lib\intel64\vc14;$(ProjectDir)library\hiredis\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -139,18 +139,22 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)src;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>tbb12.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tbb12.lib;ws2_32.lib;hiredis.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Client.cpp" />
+    <ClCompile Include="src\DatabaseWorker.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\RankingServer.cpp" />
     <ClCompile Include="src\Session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Client.h" />
+    <ClInclude Include="include\Converter.h" />
+    <ClInclude Include="include\DatabaseWorker.h" />
+    <ClInclude Include="include\DataStructure.h" />
     <ClInclude Include="include\LockFreeCircleQueue.h" />
     <ClInclude Include="include\Log.h" />
     <ClInclude Include="include\MyPacket.h" />

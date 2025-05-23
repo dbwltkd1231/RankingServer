@@ -17,7 +17,14 @@ namespace Network
 	}
 	Client::~Client()
 	{
+		mSocket_ID = -1;
+		mClientSocketPtr = nullptr;
 
+		delete[] mReceive_HeaderBuffer;
+		delete[] mReceive_BodyBuffer;
+
+		delete[] mSend_HeaderBuffer;
+		delete[] mSend_BodyBuffer;
 	}
 
 	void Client::Initialize(
