@@ -23,7 +23,11 @@ namespace Network
 		mActive = false;
 	}
 
-	void Session::Process(HANDLE mIocpHandle, std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> clientMap, std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> overlappedQueue)
+	void Session::Process(HANDLE mIocpHandle, 
+		std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> clientMap, 
+		std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> overlappedQueue,
+		std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback
+	)
 	{
 		CustomOverlapped* overlapped = nullptr;
 		DWORD bytesTransferred = 0; 
@@ -40,6 +44,8 @@ namespace Network
 				continue;
 			}
 
+
+
 			switch (overlapped->mOperationType)
 			{
 			case OperationType::OP_ACCEPT:
@@ -52,6 +58,7 @@ namespace Network
 					Utility::Debug("Network", "Session", "Accept Sokcet Find Fail !");
 					continue;
 				}
+
 				auto client = clientFinder->second;
 
 				std::string log = std::to_string(receivedHeader->socket_id) + " Socket Connected Success !";
@@ -79,8 +86,20 @@ namespace Network
 				}
 				else
 				{
+					MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->wsabuf[0].buf);
+
 					std::string log = std::to_string(completionKey) + " Socket Recv Success";
 					Utility::Debug("Network", "Session", log);
+
+					auto socket_id = ntohl(receivedHeader->socket_id);
+					auto request_body_size = ntohl(receivedHeader->body_size);
+					auto request_contents_type = ntohl(receivedHeader->contents_type);
+
+					receiveCallback(socket_id, request_body_size, request_contents_type, overlapped->wsabuf[1].buf);
+
+					overlapped->Clear();
+					overlappedQueue->push(std::move(overlapped));
+					client->ReceiveReady();
 				}
 
 				break;

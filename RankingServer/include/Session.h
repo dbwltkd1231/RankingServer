@@ -24,7 +24,10 @@ namespace Network
 		~Session();
 
 		void Activate();
-		void Process(HANDLE iocpHandle, std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> clientMap, std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> overlappedQueue);
+		void Process(HANDLE iocpHandle, 
+			std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> clientMap, 
+			std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> overlappedQueue,
+			std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback);
 		void Deactivate();
 
 	private:

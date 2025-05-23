@@ -128,7 +128,7 @@ namespace Network
 		Utility::Debug("Network", "NetworkManager", "Initialize Success !!");
 	}
 
-	void NetworkManager::Ready(int sessionQueueMax)
+	void NetworkManager::Ready(int sessionQueueMax, std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback)
 	{
 		for (auto& client : *mClientMap)
 		{
@@ -145,7 +145,7 @@ namespace Network
 			auto sessionPtr = std::make_shared<Session>();
 			sessionPtr->Activate();
 
-			std::thread thread([sessionPtr, this]() { sessionPtr->Process(mIOCPHandle, mClientMap, mOverlappedQueue); });
+			std::thread thread([sessionPtr, receiveCallback, this]() { sessionPtr->Process(mIOCPHandle, mClientMap, mOverlappedQueue, receiveCallback); });
 			thread.detach();
 
 			mSessionQueue->push(std::move(sessionPtr));

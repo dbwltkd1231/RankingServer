@@ -4,6 +4,7 @@
 #include<string>
 #include<memory>
 #include<thread>
+#include <functional>
 
 #define NOMINMAX
 #include <winsock2.h>
@@ -33,7 +34,7 @@ namespace Network
 
 		void Initialize(u_short port, int socketMax);
 
-		void Ready(int sessionQueueMax);
+		void Ready(int sessionQueueMax, std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback);
 		void Deinitialize();
 
 		std::shared_ptr<Utility::LockFreeCircleQueue<std::shared_ptr<Session>>> mSessionQueue;
@@ -45,6 +46,5 @@ namespace Network
 
 		std::shared_ptr<tbb::concurrent_map<int, std::shared_ptr<Client>>> mClientMap;
 		std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> mOverlappedQueue;
-
 	};
 }
