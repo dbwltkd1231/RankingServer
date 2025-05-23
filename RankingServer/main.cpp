@@ -11,6 +11,12 @@
 int main()
 {
 	Network::NetworkManager networkManager;
-	networkManager.Initialize(MY_PORT_NUM, 20, 10);
+	networkManager.Initialize(MY_PORT_NUM, 10);
+	networkManager.Ready(20);
 
+
+	while (true)
+	{
+
+	}
 }

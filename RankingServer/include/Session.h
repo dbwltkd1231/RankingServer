@@ -9,6 +9,8 @@
 
 #include "MyPacket.h"
 
+#define BUFFER_SIZE 1024
+
 namespace Network
 {
 	class Session
@@ -17,17 +19,11 @@ namespace Network
 		Session();
 		~Session();
 
-		void Initialize();
-		void Deinitialize();
-
+		void Activate();
+		void Process(HANDLE iocpHandle);
+		void Deactivate();
 
 	private:
-
-		DWORD mBytesTransferred;
-		ULONG_PTR mCompletionKey;
-
 		bool mActive;
-
-		void Process();
 	};
 }

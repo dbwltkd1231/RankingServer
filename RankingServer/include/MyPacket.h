@@ -38,7 +38,7 @@ namespace Network
     {
         WSABUF wsabuf[2];
         MessageHeader* header;
-        OperationType operationType;
+        OperationType mOperationType;
 
         CustomOverlapped()
         {
@@ -47,7 +47,7 @@ namespace Network
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
-            operationType = OperationType::OP_DEFAULT;
+            mOperationType = OperationType::OP_DEFAULT;
         }
 
         ~CustomOverlapped()
@@ -57,7 +57,7 @@ namespace Network
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
-            operationType = OperationType::OP_DEFAULT;
+            mOperationType = OperationType::OP_DEFAULT;
         }
 
         // 복사 생성자
@@ -87,7 +87,7 @@ namespace Network
                 wsabuf[1].len = 0;
             }
 
-            operationType = other.operationType;
+            mOperationType = other.mOperationType;
         }
 
         void Initialize(char* headerBuffer, char* bodyBuffer, ULONG headerLen, ULONG bodyLen)
@@ -98,6 +98,11 @@ namespace Network
             wsabuf[1].len = bodyLen;
         }
 
+		void SetOperationType(OperationType operationType)
+		{
+			mOperationType = operationType;
+		}
+
         void Clear()
         {
             header = nullptr;
@@ -105,7 +110,7 @@ namespace Network
             wsabuf[0].len = 0;
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
-            operationType = OperationType::OP_DEFAULT;
+            mOperationType = OperationType::OP_DEFAULT;
         }
     };
 }

@@ -14,7 +14,7 @@ namespace Network
 		std::cout << "IOCP Destructor Called" << std::endl;
 	}
 
-	void NetworkManager::Initialize(u_short port, int sessionQueueMax, int socketMax)
+	void NetworkManager::Initialize(u_short port, int socketMax)
 	{
 		mPort = port;
 
@@ -29,7 +29,18 @@ namespace Network
 			return;
 		}
 
+
 		mListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		//SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		//
+		//mListenSocket = std::shared_ptr<SOCKET>(
+		//	new SOCKET(sock),
+		//	[](SOCKET* s) {
+		//		if (*s != INVALID_SOCKET) closesocket(*s);
+		//		delete s;
+		//	}
+		//);
+
 		if (mListenSocket == INVALID_SOCKET)
 		{
 			Utility::Debug("Network", "NetworkManager", "listenSocket Create failed");
@@ -94,11 +105,12 @@ namespace Network
 			return;
 		}
 
-		mSessionQueue.Construct(sessionQueueMax + 1);
-		for (int i = 0;i < sessionQueueMax;++i)
+		mOverlappedQueue = std::make_shared<Utility::LockFreeCircleQueue<CustomOverlapped*>>();
+		mOverlappedQueue->Construct(200 + 1);//todo
+		for (int i = 0;i < 200;++i)
 		{
-			auto sessionPtr = std::make_shared<Session>();
-			mSessionQueue.push(std::move(sessionPtr));
+			auto overlapped = new CustomOverlapped();
+			mOverlappedQueue->push(std::move(overlapped));
 		}
 
 		for (int index = 0;index < socketMax;++index)
@@ -107,13 +119,36 @@ namespace Network
 			auto socketSharedPtr = std::make_shared<SOCKET>(newSocket);
 
 			std::shared_ptr<Client> clientSharedPtr = std::make_shared<Client>();
-			clientSharedPtr->Initialize(socketSharedPtr, index, sizeof(MessageHeader), BUFFER_SIZE);
+			clientSharedPtr->Initialize(socketSharedPtr, index, mOverlappedQueue);
 			mClientMap.insert(std::make_pair(index, clientSharedPtr));
 			CreateIoCompletionPort((HANDLE)newSocket, mIOCPHandle, (ULONG_PTR)index, mNumThreads);
-
 		}
 
 		Utility::Debug("Network", "NetworkManager", "Initialize Success !!");
+	}
+
+	void NetworkManager::Ready(int sessionQueueMax)
+	{
+		for (auto& client : mClientMap)
+		{
+			auto clientPtr = client.second;
+			clientPtr->AcceptReady(mListenSocket, mAcceptExPointer);
+		}
+
+		mSessionQueue = std::make_shared<Utility::LockFreeCircleQueue<std::shared_ptr<Session>>>();
+		mSessionQueue->Construct(sessionQueueMax + 1);
+		for (int i = 0;i < sessionQueueMax;++i)
+		{
+			auto sessionPtr = std::make_shared<Session>();
+			sessionPtr->Activate();
+
+			std::thread thread([sessionPtr, this]() { sessionPtr->Process(mIOCPHandle); });
+			thread.detach();
+
+			mSessionQueue->push(std::move(sessionPtr));
+		}
+
+		//redis / sql ?
 	}
 }
 

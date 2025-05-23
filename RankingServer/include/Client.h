@@ -2,11 +2,16 @@
 #include <iostream>
 #include <memory>
 
+
 #define NOMINMAX
 #include <winsock2.h>
 #include<MSWSock.h>
 #include <windows.h>
 
+#include "MyPacket.h"
+#include "LockFreeCircleQueue.h"
+
+#define BUFFER_SIZE 1024
 
 namespace Network
 {
@@ -15,16 +20,20 @@ namespace Network
 	public:
 		Client();
 		~Client();
-		void Initialize(std::shared_ptr<SOCKET> clientSocketPtr, int socketID, int headerSize, int bodySize);
+		void Initialize(
+			std::shared_ptr<SOCKET> clientSocketPtr, 
+			int socketID,
+			std::shared_ptr<Utility::LockFreeCircleQueue<Network::CustomOverlapped*>> overlappedQueue);
 		void Deinitialize();
 		bool AcceptReady(SOCKET& listenSocket, LPFN_ACCEPTEX& acceptExPointer);
 	private:
 		int mSocket_ID;
 		std::shared_ptr<SOCKET> mClientSocketPtr;
+		std::shared_ptr<Utility::LockFreeCircleQueue<Network::CustomOverlapped*>> mOverlappedQueue;
 
-		int mHeaderSize;
-		int mBodySize;
-		char* mHeaderBuffer;
-		char* mBodyBuffer;
+		char* mReceive_HeaderBuffer;
+		char* mReceive_BodyBuffer;
+		char* mSend_HeaderBuffer;
+		char* mSend_BodyBuffer;
 	};
 }

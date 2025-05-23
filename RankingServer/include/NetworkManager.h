@@ -3,6 +3,7 @@
 #include<iostream>
 #include<string>
 #include<memory>
+#include<thread>
 
 #define NOMINMAX
 #include <winsock2.h>
@@ -30,17 +31,20 @@ namespace Network
 		NetworkManager();
 		~NetworkManager();
 
-		void Initialize(u_short port, int sessionQueueMax, int socketMax);
+		void Initialize(u_short port, int socketMax);
+
+		void Ready(int sessionQueueMax);
 		void Deinitialize();
 
-		Utility::LockFreeCircleQueue< std::shared_ptr<Session>> mSessionQueue;
+		std::shared_ptr<Utility::LockFreeCircleQueue<std::shared_ptr<Session>>> mSessionQueue;
 	private:
-		SOCKET mListenSocket = INVALID_SOCKET;
+		SOCKET mListenSocket;
 		LPFN_ACCEPTEX mAcceptExPointer = nullptr;
 		u_short mPort;
 		int mNumThreads;
 
 		tbb::concurrent_map<int, std::shared_ptr<Client>> mClientMap;
+		std::shared_ptr<Utility::LockFreeCircleQueue<CustomOverlapped*>> mOverlappedQueue;
 
 	};
 }
