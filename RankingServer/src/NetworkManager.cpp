@@ -140,10 +140,10 @@ namespace Network
 			thread.detach();
 
 			mSessionQueue->push(std::move(sessionPtr));
-		}
 
-		Utility::Debug("Network", "NetworkManager", "Session Process Start");
-		//redis / sql ?
+			std::string log = std::to_string(i) + " Session Thread Process Start";
+			Utility::Debug("Network", "NetworkManager", log);
+		}
 
 		Utility::Debug("Network", "NetworkManager", "Ready Success !!");
 	}

@@ -146,6 +146,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\DatabaseWorker.cpp" />
+    <ClCompile Include="src\Hub.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\RankingServer.cpp" />
     <ClCompile Include="src\Session.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="include\Converter.h" />
     <ClInclude Include="include\DatabaseWorker.h" />
     <ClInclude Include="include\DataStructure.h" />
+    <ClInclude Include="include\Hub.h" />
     <ClInclude Include="include\LockFreeCircleQueue.h" />
     <ClInclude Include="include\Log.h" />
     <ClInclude Include="include\MyPacket.h" />
