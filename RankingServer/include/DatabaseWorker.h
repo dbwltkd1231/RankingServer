@@ -25,6 +25,7 @@ namespace Business
 		void ScoreDataSave();
 		void RankingUpdate();
 		void RankingDataLoad();
+		nlohmann::json GetCachedData(const std::string table, const std::string key);
 	private:
 		SQLHENV mHenv;
 		SQLHDBC mHdbc;

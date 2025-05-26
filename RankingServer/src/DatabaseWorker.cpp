@@ -148,6 +148,24 @@ namespace Business
         }
     }
 
+    void DatabaseWorker::RankingUpdate()
+    {
+        SQLAllocHandle(SQL_HANDLE_STMT, mHdbc, &mHstmt);
+
+        std::wstring queryStr = L"EXEC UpdateRanking;";
+        SQLWCHAR* dataQuery = (SQLWCHAR*)queryStr.c_str();
+        SQLRETURN ret = SQLExecDirectW(mHstmt, dataQuery, SQL_NTS);
+
+        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+        {
+            Utility::Debug("Business", "DatabaseWorker", "Ranking Update Error");
+        }
+        else
+        {
+            Utility::Debug("Business", "DatabaseWorker", "Ranking Update Success");
+        }
+    }
+
     //랭킹데이터는 주기적으로 로드하기위해 코드 분리하였음.
     void DatabaseWorker::RankingDataLoad()
     {
@@ -182,6 +200,33 @@ namespace Business
             Utility::Debug("Business", "DatabaseWorker", log);
     
         }
+    }
+
+    nlohmann::json DatabaseWorker::GetCachedData(const std::string table, const std::string key)
+    {
+        std::string cacheKey = "table:" + table + ":" + key;
+
+        redisReply* reply = (redisReply*)redisCommand(mRedis, "GET %s", cacheKey.c_str());
+        if (reply != NULL && reply->type == REDIS_REPLY_STRING)
+        {
+            std::string jsonString = reply->str;
+            nlohmann::json parsedJson = nlohmann::json::parse(jsonString);
+            freeReplyObject(reply);
+            return parsedJson;
+        }
+
+        std::string log = key + " is not founded in " + table + " Table ";
+        Utility::Debug("Business", "DatabaseWorker", key);
+        return "";
+    }
+
+    void DatabaseWorker::SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl)
+    {
+        std::string cacheKey = "table:" + table + ":" + key;
+        redisReply* reply = (redisReply*)redisCommand(mRedis, "SET %s %s EX %d", cacheKey.c_str(), jsonString.c_str(), ttl);
+
+        std::string log = "Set Cached Data : " + cacheKey + " - " + jsonString;
+        Utility::Debug("Business", "DatabaseWorker", log);
     }
 
     void DatabaseWorker::ScoreDataSave()
@@ -260,32 +305,4 @@ namespace Business
 
         Utility::Debug("Business", "DatabaseWorker", "Score Data Save to SQL");
     }
-
-    void DatabaseWorker::RankingUpdate()
-    {
-        SQLAllocHandle(SQL_HANDLE_STMT, mHdbc, &mHstmt);
-
-        std::wstring queryStr = L"EXEC UpdateRanking;";
-        SQLWCHAR* dataQuery = (SQLWCHAR*)queryStr.c_str();
-        SQLRETURN ret = SQLExecDirectW(mHstmt, dataQuery, SQL_NTS);
-
-        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) 
-        {
-            Utility::Debug("Business", "DatabaseWorker", "Ranking Update Error");
-        }
-        else 
-        {
-            Utility::Debug("Business", "DatabaseWorker", "Ranking Update Success");
-        }
-    }
-
-    void DatabaseWorker::SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl)
-    {
-        std::string cacheKey = "table:" + table + ":" + key;
-        redisReply* reply = (redisReply*)redisCommand(mRedis, "SET %s %s EX %d", cacheKey.c_str(), jsonString.c_str(), ttl);
-
-		std::string log = "Set Cached Data : " + cacheKey + " - " + jsonString;
-        Utility::Debug("Business", "DatabaseWorker", log);
-    }
-
 }

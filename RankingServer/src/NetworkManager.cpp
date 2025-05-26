@@ -31,15 +31,6 @@ namespace Network
 
 
 		mListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		//SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		//
-		//mListenSocket = std::shared_ptr<SOCKET>(
-		//	new SOCKET(sock),
-		//	[](SOCKET* s) {
-		//		if (*s != INVALID_SOCKET) closesocket(*s);
-		//		delete s;
-		//	}
-		//);
 
 		if (mListenSocket == INVALID_SOCKET)
 		{

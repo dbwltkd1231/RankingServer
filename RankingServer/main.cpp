@@ -10,6 +10,9 @@
 #define MY_IP "127.0.0.1"
 #define MY_PORT_NUM 9090
 #define REDIS_PORT_NUM 6379
+#define SOCKET_MAX 10
+#define THREAD_NUM 20
+#define UPDATE_INTERVAL 1 
 
 int main()
 {
@@ -26,14 +29,29 @@ int main()
 	);
 
 	Network::NetworkManager networkManager;
-	networkManager.Initialize(MY_PORT_NUM, 10);
-	networkManager.Ready(20, receiveCallback);
+	networkManager.Initialize(MY_PORT_NUM, SOCKET_MAX);
+	networkManager.Ready(THREAD_NUM, receiveCallback);
+
+	auto tmp = databaseWorker.GetCachedData("Ranking", "player3");
+	if (tmp == "")
+	{
+		Utility::Debug("RankingServer", "Main", "player3 not founded");
+	}
+	else
+	{
+		Business::Data_Ranking data_Ranking(tmp);
+		std::string dataCheck = "player_id : " + data_Ranking.playerId + " rank : " + std::to_string(data_Ranking.rank);
+		Utility::Debug("RankingServer", "Main", dataCheck);
+	}
+
+	std::string log = std::to_string(UPDATE_INTERVAL) + "분 경과, 데이터 저장 및 랭킹 업데이트 시작";
 
 	while (true)
 	{
 		Utility::Debug("RankingServer", "Main", "랭킹 업데이트 대기중...");
-		std::this_thread::sleep_for(std::chrono::minutes(1));  // 1분 대기
-		Utility::Debug("RankingServer", "Main", "1분 경과, 데이터 저장 및 랭킹 업데이트 시작");
+		std::this_thread::sleep_for(std::chrono::minutes(UPDATE_INTERVAL));
+		Utility::Debug("RankingServer", "Main", log);
+
 		databaseWorker.ScoreDataSave();
 		databaseWorker.RankingUpdate();
 		databaseWorker.RankingDataLoad();

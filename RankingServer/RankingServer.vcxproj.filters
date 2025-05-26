@@ -28,9 +28,6 @@
     <Filter Include="헤더 파일\Utility">
       <UniqueIdentifier>{f2d5d172-658c-4f2e-8ce8-1041c382c557}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\Utility">
-      <UniqueIdentifier>{64206d03-8c48-4e71-97c4-2c7a860385b9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
