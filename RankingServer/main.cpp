@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <chrono>
 
 #include "RankingServer.h"
 #include "NetworkManager.h"
@@ -18,7 +19,6 @@ int main()
 	databaseWorker.Initalize();
 	databaseWorker.RedisConnect(MY_IP, REDIS_PORT_NUM);
 	databaseWorker.DataLoadInSQL();
-	//rankingServer.DataLoad(MY_IP, REDIS_PORT_NUM);
 
 	auto receiveCallback = std::function<void(uint32_t, uint32_t, uint32_t, char*)>(
 		std::bind(&Business::RankingServer::MessageRead, std::ref(rankingServer),
@@ -31,6 +31,11 @@ int main()
 
 	while (true)
 	{
-
+		Utility::Debug("RankingServer", "Main", "랭킹 업데이트 대기중...");
+		std::this_thread::sleep_for(std::chrono::minutes(1));  // 1분 대기
+		Utility::Debug("RankingServer", "Main", "1분 경과, 데이터 저장 및 랭킹 업데이트 시작");
+		databaseWorker.ScoreDataSave();
+		databaseWorker.RankingUpdate();
+		databaseWorker.RankingDataLoad();
 	}
 }

@@ -5,13 +5,6 @@
 
 namespace Business
 {
-    enum class TableType
-    {
-        Score,
-        Ranking,
-        Unknown
-    };
-
     struct Data_Score
     {
         std::string playerId;
@@ -27,11 +20,34 @@ namespace Business
 
         nlohmann::json static toJson(std::string id, int score, std::time_t last_update)
         {
-            nlohmann::json rankingJson =
+            nlohmann::json scoreJson =
             {
                  {"player_id", id},
                  {"score", score},
                  {"last_update", last_update}
+            };
+
+            return scoreJson;
+        }
+    };
+
+    struct Data_Ranking
+    {
+        int rank;
+        std::string playerId;
+
+        Data_Ranking(const nlohmann::json& jsonStr)
+        {
+            rank = jsonStr["rank"];
+            playerId = jsonStr["player_id"];
+        }
+
+        nlohmann::json static toJson(int rank, std::string id)
+        {
+            nlohmann::json rankingJson =
+            {
+                 {"rank", rank},
+                 {"player_id", id},
             };
 
             return rankingJson;
