@@ -6,12 +6,12 @@ namespace Network
 {
 	NetworkManager::NetworkManager()
 	{
-		std::cout << "IOCP Constructor Called" << std::endl;
+		Utility::Debug("Network", "NetworkManager", "NetworkManager Construct");
 	}
 
 	NetworkManager::~NetworkManager()
 	{
-		std::cout << "IOCP Destructor Called" << std::endl;
+		Utility::Debug("Network", "NetworkManager", "NetworkManager Destruct");
 	}
 
 	void NetworkManager::Initialize(u_short port, int socketMax)

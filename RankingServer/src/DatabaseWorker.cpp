@@ -1,20 +1,28 @@
 #pragma once
-#include "DatabaseWorker.h"  
-#include <iostream>
-#include <string>
-
-
+#include "DatabaseWorker.h"
+#include "Converter.h"
 
 namespace Business
 {
-    void DatabaseWorker::Initalize()
-    {
+	DatabaseWorker::DatabaseWorker()
+	{
+
+	}
+
+	DatabaseWorker::~DatabaseWorker()
+	{
+
+	}
+
+	void DatabaseWorker::Initalize()
+	{
         SQLWCHAR sqlState[6], message[256];
         SQLINTEGER nativeError;
         SQLSMALLINT messageLength;
 
         SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &mHenv);
 
+        //ODBC 버전 설정
         ret = SQLSetEnvAttr(mHenv, SQL_ATTR_ODBC_VERSION, (void*)SQL_OV_ODBC3, 0);
 
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
@@ -22,7 +30,7 @@ namespace Business
             std::wcout << L"ODBC 오류 발생: " << message << L" (SQLState: " << sqlState << L")\n";
             return;
         }
-        std::cout << "MSSQL Connect-4 Success" << std::endl;
+        Utility::Debug("Business", "DatabaseWorker", "MSSQL Version Setting Success");
 
         //연결 핸들 생성
         ret = SQLAllocHandle(SQL_HANDLE_DBC, mHenv, &mHdbc);
@@ -32,9 +40,9 @@ namespace Business
             std::wcout << L"ODBC 오류 발생: " << message << L" (SQLState: " << sqlState << L")\n";
             return;
         }
-        std::cout << "MSSQL Connect-3 Success" << std::endl;
+        Utility::Debug("Business", "DatabaseWorker", "MSSQL Handle Create Success");
 
-        SQLWCHAR* connStr = (SQLWCHAR*)L"DRIVER={SQL Server};SERVER=DESKTOP-O5SU309\\SQLEXPRESS;DATABASE=MyChat;Trusted_Connection=yes;"; //->windows인증일때 사용
+        SQLWCHAR* connStr = (SQLWCHAR*)L"DRIVER={SQL Server};SERVER=DESKTOP-O5SU309\\SQLEXPRESS;DATABASE=RankingServer;Trusted_Connection=yes;"; //->windows인증일때 사용
 
 
         //DB에 연결
@@ -43,100 +51,121 @@ namespace Business
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
         {
             SQLGetDiagRecW(SQL_HANDLE_DBC, mHdbc, 1, sqlState, &nativeError, message, sizeof(message), &messageLength);
+
             std::wcout << L"ODBC 오류 발생: " << message << L" (SQLState: " << sqlState << L")\n";
             return;
         }
+        Utility::Debug("Business", "DatabaseWorker", "MSSQL DB Connect Success");
 
-     //쿼리 실행을 위한 문장 핸들 생성
         ret = SQLAllocHandle(SQL_HANDLE_STMT, mHdbc, &mHstmt);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "ODBC 오류 발생" << std::endl;
             return;
         }
+        Utility::Debug("Business", "DatabaseWorker", "MSSQL Querry Handle Create Success");
 
-        SQLSetConnectAttr(mHdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);//자동커밋
+        SQLSetConnectAttr(mHdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);//자동커밋 세팅
 
-        std::cout << "MSSQL Connect Success" << std::endl;
-
-        mTableMap = 
-        {
-        {"Ranking", TableType::Ranking}
+        mTableMap = {
+                    {"Score", TableType::Score},
+                    {"Ranking", TableType::Ranking}
         };
-    }
+	}
 
-    void DatabaseWorker::Deinitalize()
-    {
-        clearTableCache("Ranking");
-        redisFree(mRedis); 
-
-        SQLFreeHandle(SQL_HANDLE_STMT, mHstmt);
-        SQLDisconnect(mHdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, mHdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, mHenv);
-    }
-
-    bool DatabaseWorker::DataCaching(std::string ip, int port)
-    {
+	void DatabaseWorker::RedisConnect(std::string ip, int port)
+	{
         //이코드 실행전 Redis 서버 실행 필요
         mRedis = redisConnect(ip.c_str(), port);
         if (mRedis == NULL || mRedis->err)
         {
-            std::cout << "Redis 연결 실패!" << std::endl;
-            return false;
+            Utility::Debug("Business", "DatabaseWorker", "Redis Connect Fail");
+            return;
         }
-        std::cout << "Redis 연결 성공!" << std::endl;
+        Utility::Debug("Business", "DatabaseWorker", "Redis Create Success");
+	}
 
-
-        SQLWCHAR* tableQuery = (SQLWCHAR*)L"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = 'MyChat';";
+	void DatabaseWorker::DataLoadInSQL()
+	{
+        SQLWCHAR* tableQuery = (SQLWCHAR*)L"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = 'RankingServer';";
         SQLRETURN ret = SQLExecDirectW(mHstmt, tableQuery, SQL_NTS);
 
         if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
         {
-            std::cout << "쿼리 실행 성공" << std::endl;
+            Utility::Debug("Business", "DatabaseWorker", "RankingServer Table Find...");
 
             SQLWCHAR tableName[256];
             while (SQLFetch(mHstmt) == SQL_SUCCESS) {
                 SQLGetData(mHstmt, 1, SQL_C_WCHAR, tableName, sizeof(tableName), NULL);
 
-                std::cout << "TableName : " << Utility::Converter::StringConvert(std::wstring(tableName)) << std::endl;
+                std::string log = "Table Find : " + Utility::Converter::StringConvert(std::wstring(tableName));
+                Utility::Debug("Business", "DatabaseWorker", log);
                 mTableNameSet.insert(Utility::Converter::StringConvert(std::wstring(tableName)));
             }
+
+            Utility::Debug("Business", "DatabaseWorker", "RankingServer Table Find End.");
         }
         else
         {
-            std::cout << "쿼리 실행 오류 발생" << std::endl;
+            Utility::Debug("Business", "DatabaseWorker", "Table Find Query Error");
         }
 
-        SQLFreeStmt(mHstmt, SQL_CLOSE); // 이전 쿼리 결과 닫기
+        SQLFreeStmt(mHstmt, SQL_CLOSE); 
 
         for (auto table : mTableNameSet)
         {
-            SQLFreeStmt(mHstmt, SQL_CLOSE); // 이전 쿼리 결과 닫기
+            SQLFreeStmt(mHstmt, SQL_CLOSE);
             auto tableType = getTableType(table);
 
             switch (tableType)
             {
             case TableType::Unknown:
             {
-                std::cout << "Unknown" << std::endl;
+                Utility::Debug("Business", "DatabaseWorker", "Unkonwon Data Caching...");
                 break;
             }
-            default:
+            case TableType::Score:
+            {
+                Utility::Debug("Business", "DatabaseWorker", "Score Data Caching...");
+
+                std::wstring queryStr = L"SELECT player_id, score, last_update FROM " + std::wstring(table.begin(), table.end());
+                SQLWCHAR* dataQuery = (SQLWCHAR*)queryStr.c_str();
+                SQLRETURN dataRet = SQLExecDirectW(mHstmt, dataQuery, SQL_NTS);
+                if (dataRet == SQL_SUCCESS || dataRet == SQL_SUCCESS_WITH_INFO)
+                {
+                    SQLWCHAR id[16];
+                    int score;
+                    TIMESTAMP_STRUCT last_update;
+
+                    int count = 0;
+                    while (SQLFetch(mHstmt) == SQL_SUCCESS)
+                    {
+                        SQLGetData(mHstmt, 1, SQL_C_WCHAR, &id, sizeof(id), NULL);
+                        SQLGetData(mHstmt, 1, SQL_C_LONG, &score, 0, NULL);
+                        SQLGetData(mHstmt, 3, SQL_C_TYPE_TIMESTAMP, &last_update, sizeof(TIMESTAMP_STRUCT), NULL);
+
+                        std::string id_String = Utility::Converter::WstringToUTF8(id);
+                        std::tm timeinfo = { last_update.second, last_update.minute, last_update.hour, last_update.day, last_update.month - 1, last_update.year - 1900 };
+                        std::time_t localTime = std::mktime(&timeinfo); // 로컬 시간 변환
+                        std::time_t utcTime = _mkgmtime(&timeinfo); // UTC 기준으로 변환
+
+                        auto scoreJson = Data_Score::toJson(id_String, score, utcTime);
+                        std::string jsonString = scoreJson.dump(); // JSON을 문자열로 변환
+
+                        SetCachedData(table, id_String, jsonString, 60); // 60초 TTL 설정);
+                        count++;
+                    }
+
+                    std::string log = "Score Data Caching " + std::to_string(count) + " Success";
+                    Utility::Debug("Business", "DatabaseWorker", log);
+                }
+
                 break;
             }
 
-            //SQLFreeStmt(mHstmt, SQL_CLOSE); // 이전 쿼리 결과 닫기
+            }
         }
 
-        return true;
-    }
-
-    TableType DatabaseWorker::getTableType(const std::string& table)
-    {
-        auto it = mTableMap.find(table);
-        return (it != mTableMap.end()) ? it->second : TableType::Unknown;
-    }
-
+	}
 
     void DatabaseWorker::SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl)
     {
@@ -144,123 +173,9 @@ namespace Business
         redisReply* reply = (redisReply*)redisCommand(mRedis, "SET %s %s EX %d", cacheKey.c_str(), jsonString.c_str(), ttl);
     }
 
-    void DatabaseWorker::clearTableCache(const std::string table)
+    TableType DatabaseWorker::getTableType(const std::string& table)
     {
-        std::string cacheKey = "table:" + table;
-
-        redisReply* reply = (redisReply*)redisCommand(mRedis, "DEL %s", cacheKey.c_str());
-        if (reply == NULL) {
-            std::cout << "Redis 삭제 오류!" << std::endl;
-            return;
-        }
-
-        std::cout << "초기화 완료: " << cacheKey << " 삭제됨!" << std::endl;
-        freeReplyObject(reply);
-    }
-
-    bool DatabaseWorker::IsKeyExists(const std::string table, const std::string key) {
-
-        std::string cacheKey = table + ":" + key;
-        redisReply* reply = (redisReply*)redisCommand(mRedis, "EXISTS %s", cacheKey.c_str());
-        if (reply == NULL) {
-            std::cout << "Redis 확인 오류!" << std::endl;
-            return false;
-        }
-
-        bool exists = reply->integer == 1;
-        freeReplyObject(reply);
-        return exists;
-    }
-
-    nlohmann::json DatabaseWorker::GetCachedData(const std::string table, const std::string key)
-    {
-        std::string cacheKey = "table:" + table + ":" + key;
-
-        redisReply* reply = (redisReply*)redisCommand(mRedis, "GET %s", cacheKey.c_str());
-        if (reply != NULL && reply->type == REDIS_REPLY_STRING)
-        {
-            std::string jsonString = reply->str;
-            nlohmann::json parsedJson = nlohmann::json::parse(jsonString);
-            freeReplyObject(reply);
-            return parsedJson;
-        }
-
-        std::cout << " 데이터가 없거나 오류 발생 " << std::endl;
-        return "";
-    }
-
-    void DatabaseWorker::SaveSQLDatabase(std::string table)
-    {
-        auto tableFinder = mTableMap.find(table);
-        if (tableFinder == mTableMap.end())
-        {
-            std::cout << "테이블이 존재하지 않습니다." << std::endl;
-            return;
-        }
-
-        auto tableName = tableFinder->first;
-        auto tableType = tableFinder->second;
-
-        int cursor = 0;
-        std::vector<std::string> keys;
-        redisReply* reply = nullptr;
-        do
-        {
-            reply = (redisReply*)redisCommand(mRedis, "SCAN %d MATCH table:%s:*", cursor, table.c_str());
-
-            if (reply == nullptr || reply->type != REDIS_REPLY_ARRAY || reply->elements < 2) {
-                std::cerr << "Redis SCAN 실패!" << std::endl;
-                break;
-            }
-
-            cursor = std::stoi(reply->element[0]->str);
-            redisReply* keyList = reply->element[1];
-
-            if (keyList->type == REDIS_REPLY_ARRAY)
-            {
-                for (size_t i = 0; i < keyList->elements; i++)
-                {
-                    if (keyList->element[i] != nullptr && keyList->element[i]->str != nullptr)
-                    {
-                        keys.push_back(keyList->element[i]->str);
-                    }
-                }
-            }
-
-            freeReplyObject(reply);
-
-        } while (cursor != 0);
-
-        if (keys.empty())
-        {
-            std::cout << "Redis에 데이터가 없습니다." << std::endl;
-            return;
-        }
-
-        for (const auto& key : keys)
-        {
-            reply = (redisReply*)redisCommand(mRedis, "GET %s", key.c_str());
-            std::string result;
-            if (reply != nullptr && reply->str)
-            {
-                result = reply->str;
-
-                if (!result.empty())
-                {
-                    nlohmann::json jsonData = nlohmann::json::parse(result);
-
-                    SQLAllocHandle(SQL_HANDLE_STMT, mHdbc, &mHstmt);
-
-                    switch (tableType)
-                    {
-                  
-                    default:
-                        break;
-                    }
-                }
-            }
-
-            freeReplyObject(reply);
-        }
+        auto it = mTableMap.find(table);
+        return (it != mTableMap.end()) ? it->second : TableType::Unknown;
     }
 }

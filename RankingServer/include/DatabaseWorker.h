@@ -1,49 +1,40 @@
 #pragma once
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
-#include <iostream>
-#include <string>
-#include<set>
-#include<unordered_map>
 
-#include<hiredis.h>
+#include <hiredis.h>
 
 #include "DataStructure.h"
-#include "log.h"
+#include "Log.h"
 
 namespace Business
 {
 	class DatabaseWorker
 	{
 	public:
-		DatabaseWorker()
-		{
-		}
+		DatabaseWorker();
+		~DatabaseWorker();
 
 		void Initalize();
-		void Deinitalize();
-		bool DataCaching(std::string ip, int port);
-		//void DataInput(const std::string table, const std::string key);
-		void SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl);
+		void RedisConnect(std::string ip, int port);
+		void DataLoadInSQL();
 
-		void SaveSQLDatabase(std::string table);
-
-		nlohmann::json GetCachedData(const std::string table, const std::string key);
-		TableType getTableType(const std::string& table);
 	private:
 		SQLHENV mHenv;
 		SQLHDBC mHdbc;
 		SQLHSTMT mHstmt;
 		redisContext* mRedis;
 
-		std::set<std::string> mTableNameSet;
+		std::unordered_set<std::string> mTableNameSet;
 		std::unordered_map<std::string, TableType> mTableMap;
 
-		const int TIMESTAMP_STR_LENGTH = 19; // "YYYY-MM-DD HH:MM:SS" 형식의 길이
-
-		bool IsKeyExists(const std::string table, const std::string key);
-		void clearTableCache(const std::string table);
+		TableType getTableType(const std::string& table);
+		void SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl);
 	};
-
 }

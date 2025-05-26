@@ -1,9 +1,7 @@
 #pragma once  
-#include<string> 
+#include <string>
 
 #include <nlohmann/json.hpp> 
-
-#include "Converter.h"
 
 namespace Business
 {
