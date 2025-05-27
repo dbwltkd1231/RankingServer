@@ -49,6 +49,7 @@ namespace Business
 		case protocol::MessageContent_REQUEST_PLAYER_RANKING:
 		{
 			Utility::Debug("Business", "Hub", "Read : REQUEST_PLAYER_RANKING");
+
 			auto message_wrapper = flatbuffers::GetRoot<protocol::REQUEST_PLAYER_RANKING>(bodyBuffer); // FlatBuffers 버퍼에서 루트 객체 가져오기
 			Response_PlayerRanking(socketId, message_wrapper->player_id()->str());
 			break;
@@ -58,6 +59,7 @@ namespace Business
 			Utility::Debug("Business", "Hub", "Read : REQUEST_SAVE_SCORE");
 
 			auto  REQUEST_SAVE_SCORE = flatbuffers::GetRoot<protocol::REQUEST_SAVE_SCORE>(bodyBuffer);
+			Response_SaveScore(socketId, REQUEST_SAVE_SCORE->player_id()->str(), REQUEST_SAVE_SCORE->score(), REQUEST_SAVE_SCORE->last_update());
 			break;
 		}
 		default:
@@ -82,6 +84,23 @@ namespace Business
 			databaseWorker.RankingUpdate();
 			databaseWorker.RankingDataLoad();
 		}
+	}
+
+	void Hub::Response_SaveScore(uint32_t socketId, std::string playerID, int score, long unixUpdateDate)
+	{
+		auto scoreJson = Data_Score::toJson(playerID, score, unixUpdateDate);
+		std::string jsonString = scoreJson.dump();
+
+		databaseWorker.SetCachedData("Score", playerID, jsonString, 60);
+
+		flatbuffers::FlatBufferBuilder builder;
+		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SABE_SCORE);
+		builder.Finish(protocol::CreateRESPONSE_SABE_SCORE(builder, true));
+		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
+		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
+
+		std::string log = "Send RESPONSE_SABE_SCORE : Success ";
+		Utility::Debug("Business", "Hub", log);
 	}
 
 	void Hub::Response_PlayerRanking(uint32_t socketId, std::string playerID)
@@ -117,8 +136,7 @@ namespace Business
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
 		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
 
-		std::string log = "Send Response Player Ranking - ID: " + playerID + " Score: " + std::to_string(score);
+		std::string log = "Send RESPONSE_PLAYER_RANKING - ID: " + playerID + " Score: " + std::to_string(score);
 		Utility::Debug("Business", "Hub", log);
 	}
-	
 }

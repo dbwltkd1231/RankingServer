@@ -26,13 +26,12 @@ namespace Business
 		void RankingUpdate();
 		void RankingDataLoad();
 		nlohmann::json GetCachedData(const std::string table, const std::string key);
+		void SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl);
 	private:
 		SQLHENV mHenv;
 		SQLHDBC mHdbc;
 		SQLHSTMT mHstmt;
 		redisContext* mRedis;
-
-		void SetCachedData(const std::string table, const std::string key, std::string jsonString, int ttl);
 		void ScoreDataLoad();
 
 
