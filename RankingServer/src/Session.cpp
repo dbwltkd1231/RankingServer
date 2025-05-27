@@ -43,15 +43,14 @@ namespace Network
 				Utility::Debug("Network", "Session", "GetQueuedCompletionStatus Failed! Error Code: " + std::to_string(errorCode));
 				continue;
 			}
-
-
-
+			Utility::Debug("Network", "Session", "Message Recieve Check !");
 			switch (overlapped->mOperationType)
 			{
 			case OperationType::OP_ACCEPT:
 			{
 				MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->wsabuf[0].buf);
-				auto clientFinder = clientMap->find(receivedHeader->socket_id);
+
+				auto clientFinder = clientMap.get()->find(receivedHeader->socket_id);
 
 				if (clientFinder == clientMap->end())
 				{
@@ -66,13 +65,13 @@ namespace Network
 
 				overlapped->Clear();
 				overlappedQueue->push(std::move(overlapped));
-
 				client->ReceiveReady();
+
 				break;
 			}
 			case OperationType::OP_RECV:
 			{
-				auto clientFinder = clientMap->find(completionKey);
+				auto clientFinder = clientMap.get()->find(completionKey);
 				if (clientFinder == clientMap->end())
 				{
 					Utility::Debug("Network", "Session", "Recv Sokcet Find Fail !");
@@ -91,7 +90,7 @@ namespace Network
 					std::string log = std::to_string(completionKey) + " Socket Recv Success";
 					Utility::Debug("Network", "Session", log);
 
-					auto socket_id = ntohl(receivedHeader->socket_id);
+					auto socket_id = completionKey;
 					auto request_body_size = ntohl(receivedHeader->body_size);
 					auto request_contents_type = ntohl(receivedHeader->contents_type);
 

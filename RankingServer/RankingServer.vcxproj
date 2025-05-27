@@ -148,7 +148,7 @@
     <ClCompile Include="src\DatabaseWorker.cpp" />
     <ClCompile Include="src\Hub.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
-    <ClCompile Include="src\RankingServer.cpp" />
+    <ClCompile Include="src\RankingSystem.cpp" />
     <ClCompile Include="src\Session.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -161,7 +161,7 @@
     <ClInclude Include="include\Log.h" />
     <ClInclude Include="include\MyPacket.h" />
     <ClInclude Include="include\NetworkManager.h" />
-    <ClInclude Include="include\RankingServer.h" />
+    <ClInclude Include="include\RankingSystem.h" />
     <ClInclude Include="include\Session.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

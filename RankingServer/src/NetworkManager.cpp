@@ -65,7 +65,7 @@ namespace Network
 
 		Utility::Debug("Network", "NetworkManager", "listen success");
 
-		mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 3);
+		mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, mNumThreads);
 		if (mIOCPHandle == NULL)
 		{
 			Utility::Debug("Network", "NetworkManager", "CreateIoCompletionPort failed");
@@ -119,7 +119,7 @@ namespace Network
 		Utility::Debug("Network", "NetworkManager", "Initialize Success !!");
 	}
 
-	void NetworkManager::Ready(int sessionQueueMax, std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback)
+	void NetworkManager::Ready(std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback)
 	{
 		for (auto& client : *mClientMap)
 		{
@@ -130,8 +130,8 @@ namespace Network
 		Utility::Debug("Network", "NetworkManager", "Client AcceptReady");
 
 		mSessionQueue = std::make_shared<Utility::LockFreeCircleQueue<std::shared_ptr<Session>>>();
-		mSessionQueue->Construct(sessionQueueMax + 1);
-		for (int i = 0;i < sessionQueueMax;++i)
+		mSessionQueue->Construct(mNumThreads + 1);
+		for (int i = 0;i < mNumThreads;++i)
 		{
 			auto sessionPtr = std::make_shared<Session>();
 			sessionPtr->Activate();
@@ -147,5 +147,23 @@ namespace Network
 
 		Utility::Debug("Network", "NetworkManager", "Ready Success !!");
 	}
-}
 
+	void NetworkManager::Send(int socketId, uint32_t contentsType, const char* bodyBuffer, int bodySize)
+	{
+		auto clientFinder = mClientMap.get()->find(socketId);
+		if (clientFinder == mClientMap->end())
+		{
+			Utility::Debug("Network", "NetworkManager", "Send Failed : Client Not Found");
+			return;
+		}
+
+		auto header_id = htonl(socketId);
+		auto header_body_size = htonl(bodySize);
+		auto header_contents_type = htonl(contentsType);
+
+		MessageHeader header(header_id, header_body_size, header_contents_type);
+
+		auto client = clientFinder->second;
+		client->Send(header, bodyBuffer, bodySize);
+	}
+}

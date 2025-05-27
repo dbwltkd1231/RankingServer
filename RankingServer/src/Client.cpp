@@ -63,7 +63,7 @@ namespace Network
 		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
 		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
 		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
-
+		overlapped->hEvent = NULL;
 		DWORD bytesReceived = 0;
 		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->wsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
 
@@ -96,11 +96,12 @@ namespace Network
 
 		memset(mReceive_HeaderBuffer, 0, sizeof(MessageHeader));
 		memset(mReceive_BodyBuffer, 0, BUFFER_SIZE);
-
+		
 		MessageHeader newHeader(mSocket_ID, 0, 0);
 		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
 		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
 		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
+		overlapped->hEvent = NULL;
 
 		DWORD flags = 0;
 		int result = WSARecv(*mClientSocketPtr, overlapped->wsabuf, 2, nullptr, &flags, &*overlapped, nullptr);
@@ -117,5 +118,38 @@ namespace Network
 		}
 
 		Utility::Debug("Network", "Client", log);
+	}
+
+	void Client::Send(const MessageHeader& header, const char* bodyBuffer, int bodySize)
+	{
+		if (mClientSocketPtr == nullptr || *mClientSocketPtr == INVALID_SOCKET)
+		{
+			Utility::Debug("Network", "Client", "Invalid Socket Pointer");
+			return;
+		}
+
+		memset(mSend_HeaderBuffer, 0, sizeof(MessageHeader));
+		memset(mSend_BodyBuffer, 0, BUFFER_SIZE);
+
+		std::memcpy(mSend_HeaderBuffer, &header, sizeof(MessageHeader));
+		std::memcpy(mSend_BodyBuffer, bodyBuffer, bodySize);
+
+		auto overlapped = mOverlappedQueue->pop();
+		overlapped->mOperationType = Network::OperationType::OP_SEND;
+		overlapped->SetHeader(mSend_HeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mSend_BodyBuffer, bodySize);
+		overlapped->hEvent = NULL;
+
+		DWORD flags = 0;
+		int result = WSASend(*mClientSocketPtr, overlapped->wsabuf, 2, nullptr, flags, &*overlapped, nullptr);
+		int errorCode = WSAGetLastError();
+		if (result == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		{
+			std::string log = std::to_string(mSocket_ID) + "WSASend 실패! 오류 코드: " + std::to_string(errorCode);
+			Utility::Debug("Network", "Client", log);
+			return;
+		}
+
+		Utility::Debug("Network", "Client", "Socket Send Ready");
 	}
 }

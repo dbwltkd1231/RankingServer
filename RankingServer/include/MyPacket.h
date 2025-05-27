@@ -47,6 +47,7 @@ namespace Network
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
+			this->hEvent = NULL;
         }
 
         ~CustomOverlapped()
@@ -57,11 +58,14 @@ namespace Network
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
+            this->hEvent = NULL;
         }
 
         // 복사 생성자
         CustomOverlapped(const CustomOverlapped& other)
         {
+			this->hEvent = other.hEvent;
+
             if (other.wsabuf[0].len > 0)
             {
                 wsabuf[0].buf = other.wsabuf[0].buf;
@@ -111,6 +115,7 @@ namespace Network
             wsabuf[1].buf = nullptr;
             wsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
+            this->hEvent = NULL;
         }
     };
 }
