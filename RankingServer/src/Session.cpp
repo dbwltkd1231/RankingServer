@@ -77,11 +77,13 @@ namespace Network
 					Utility::Debug("Network", "Session", "Recv Sokcet Find Fail !");
 					continue;
 				}
+
 				auto client = clientFinder->second;
 				if (bytesTransferred <= 0)
 				{
 					std::string log = std::to_string(completionKey) + " Socekt Disconneted OR Recv Error";
 					Utility::Debug("Network", "Session", log);
+
 				}
 				else
 				{
@@ -95,12 +97,11 @@ namespace Network
 					auto request_contents_type = ntohl(receivedHeader->contents_type);
 
 					receiveCallback(socket_id, request_body_size, request_contents_type, overlapped->wsabuf[1].buf);
-
-					overlapped->Clear();
-					overlappedQueue->push(std::move(overlapped));
-					client->ReceiveReady();
 				}
 
+				overlapped->Clear();
+				overlappedQueue->push(std::move(overlapped));
+				client->ReceiveReady();
 				break;
 			}
 			case OperationType::OP_SEND:
@@ -113,6 +114,17 @@ namespace Network
 				{
 					Utility::Debug("Network", "Session", "Send Success");
 				}
+
+				overlapped->Clear();
+				overlappedQueue->push(std::move(overlapped));
+
+				break;
+			}
+			case OperationType::OP_DEFAULT:
+			{
+				overlapped->Clear();
+				overlappedQueue->push(std::move(overlapped));
+
 				break;
 			}
 			}

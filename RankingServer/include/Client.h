@@ -29,6 +29,7 @@ namespace Network
 		bool AcceptReady(SOCKET& listenSocket, LPFN_ACCEPTEX& acceptExPointer);
 		void ReceiveReady();
 		void Send(const MessageHeader& header, const char* bodyBuffer, int bodySize);
+
 	private:
 		int mSocket_ID;
 		std::shared_ptr<SOCKET> mClientSocketPtr;

@@ -212,13 +212,19 @@ inline ::flatbuffers::Offset<REQUEST_SAVE_SCORE> CreateREQUEST_SAVE_SCOREDirect(
 struct RESPONSE_SAVE_SCORE FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef RESPONSE_SAVE_SCOREBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_FEEDBACK = 4
+    VT_PLAYER_ID = 4,
+    VT_FEEDBACK = 6
   };
+  const ::flatbuffers::String *player_id() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_PLAYER_ID);
+  }
   bool feedback() const {
     return GetField<uint8_t>(VT_FEEDBACK, 0) != 0;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PLAYER_ID) &&
+           verifier.VerifyString(player_id()) &&
            VerifyField<uint8_t>(verifier, VT_FEEDBACK, 1) &&
            verifier.EndTable();
   }
@@ -228,6 +234,9 @@ struct RESPONSE_SAVE_SCOREBuilder {
   typedef RESPONSE_SAVE_SCORE Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_player_id(::flatbuffers::Offset<::flatbuffers::String> player_id) {
+    fbb_.AddOffset(RESPONSE_SAVE_SCORE::VT_PLAYER_ID, player_id);
+  }
   void add_feedback(bool feedback) {
     fbb_.AddElement<uint8_t>(RESPONSE_SAVE_SCORE::VT_FEEDBACK, static_cast<uint8_t>(feedback), 0);
   }
@@ -244,10 +253,23 @@ struct RESPONSE_SAVE_SCOREBuilder {
 
 inline ::flatbuffers::Offset<RESPONSE_SAVE_SCORE> CreateRESPONSE_SAVE_SCORE(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> player_id = 0,
     bool feedback = false) {
   RESPONSE_SAVE_SCOREBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   builder_.add_feedback(feedback);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<RESPONSE_SAVE_SCORE> CreateRESPONSE_SAVE_SCOREDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *player_id = nullptr,
+    bool feedback = false) {
+  auto player_id__ = player_id ? _fbb.CreateString(player_id) : 0;
+  return protocol::CreateRESPONSE_SAVE_SCORE(
+      _fbb,
+      player_id__,
+      feedback);
 }
 
 struct REQUEST_PLAYER_RANKING FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

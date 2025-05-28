@@ -173,7 +173,7 @@ namespace Business
         std::string tableName = "Ranking";
         Utility::Debug("Business", "DatabaseWorker", "Ranking Data Caching...");
 
-        std::wstring queryStr = L"SELECT rank, player_id FROM " + std::wstring(tableName.begin(), tableName.end());
+        std::wstring queryStr = L"SELECT TOP 100 rank, player_id FROM " + std::wstring(tableName.begin(), tableName.end());
         SQLWCHAR* dataQuery = (SQLWCHAR*)queryStr.c_str();
         SQLRETURN dataRet = SQLExecDirectW(mHstmt, dataQuery, SQL_NTS);
 

@@ -43,6 +43,7 @@ namespace Business
 	void Hub::Send(uint32_t socketId, uint32_t requestType, char* bodyBuffer)
 	{
 		auto messageType = static_cast<protocol::MessageContent>(requestType);
+		Utility::Debug("Business", "Hub", std::to_string(socketId));
 
 		switch (messageType)
 		{
@@ -65,7 +66,7 @@ namespace Business
 		}
 		default:
 		{
-			Utility::Debug("Business", "Hub", "Read : CONTENTS TYPE ERROR !!");
+			//Utility::Debug("Business", "Hub", "Read : CONTENTS TYPE ERROR !!!!!");
 			break;
 		}
 		}
@@ -96,7 +97,9 @@ namespace Business
 
 		flatbuffers::FlatBufferBuilder builder;
 		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SAVE_SCORE);
-		builder.Finish(protocol::CreateRESPONSE_SAVE_SCORE(builder, true));
+		auto id = builder.CreateString(playerID);
+
+		builder.Finish(protocol::CreateRESPONSE_SAVE_SCORE(builder, id, true));
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
 		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
 
@@ -117,20 +120,23 @@ namespace Business
 		if (playerScore == "")
 		{
 			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, 0, 0, false, false));
-			return;
-		}
 
-		Business::Data_Score data_Score(playerScore);
-		score = data_Score.score;
-
-		if (playerRanking == "")
-		{
-			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, 0, false, true));
 		}
 		else
 		{
-			Business::Data_Ranking data_Ranking(playerRanking);
-			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, data_Ranking.rank, true, true));
+			Business::Data_Score data_Score(playerScore);
+			score = data_Score.score;
+
+			if (playerRanking == "")
+			{
+				builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, 0, false, true));
+			}
+			else
+			{
+				Business::Data_Ranking data_Ranking(playerRanking);
+		
+				builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, data_Ranking.rank, true, true));
+			}
 		}
 
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
