@@ -30,7 +30,7 @@ namespace Business
 		void Read(uint32_t socketId, uint32_t bodySize, uint32_t contentType, char* bodyBuffer);
 		void Send(uint32_t socketId, uint32_t requestType, char* bodyBuffer);
 
-		void Response_SaveScore(uint32_t socketId, std::string playerID, int score, long unixUpdateDate);
+		void Response_SaveScore(uint32_t socketId, std::string playerID, int score, std::time_t unixUpdateDate);
 		void Response_PlayerRanking(uint32_t socketId,std::string playerID);
 	};
 }

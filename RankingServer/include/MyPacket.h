@@ -1,10 +1,10 @@
 #pragma once
-
+#include<memory>
 
 #define NOMINMAX
 #include <winsock2.h>
 #include<MSWSock.h>
-#include <windows.h>
+
 
 namespace Network
 {

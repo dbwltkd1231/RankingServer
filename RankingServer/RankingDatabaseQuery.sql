@@ -49,4 +49,17 @@ GO
 EXEC InsertScores;
 GO
 
+CREATE PROCEDURE UpdateRanking
+AS
+BEGIN
+    TRUNCATE TABLE Ranking;
+
+    INSERT INTO Ranking (rank, player_id)
+    SELECT ROW_NUMBER() OVER (ORDER BY score DESC) AS rank, player_id
+    FROM Score;
+END;
+GO
+
+EXEC UpdateRanking;
+GO
 

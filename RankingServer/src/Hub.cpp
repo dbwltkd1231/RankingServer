@@ -59,7 +59,8 @@ namespace Business
 			Utility::Debug("Business", "Hub", "Read : REQUEST_SAVE_SCORE");
 
 			auto  REQUEST_SAVE_SCORE = flatbuffers::GetRoot<protocol::REQUEST_SAVE_SCORE>(bodyBuffer);
-			Response_SaveScore(socketId, REQUEST_SAVE_SCORE->player_id()->str(), REQUEST_SAVE_SCORE->score(), REQUEST_SAVE_SCORE->last_update());
+			std::time_t timeTValue = static_cast<std::time_t>(REQUEST_SAVE_SCORE->last_update()); // º¯È¯
+			Response_SaveScore(socketId, REQUEST_SAVE_SCORE->player_id()->str(), REQUEST_SAVE_SCORE->score(), timeTValue);
 			break;
 		}
 		default:
@@ -86,20 +87,20 @@ namespace Business
 		}
 	}
 
-	void Hub::Response_SaveScore(uint32_t socketId, std::string playerID, int score, long unixUpdateDate)
+	void Hub::Response_SaveScore(uint32_t socketId, std::string playerID, int newScore, std::time_t unixUpdateDate)
 	{
-		auto scoreJson = Data_Score::toJson(playerID, score, unixUpdateDate);
+		auto scoreJson = Data_Score::toJson(playerID, newScore, unixUpdateDate);
 		std::string jsonString = scoreJson.dump();
 
 		databaseWorker.SetCachedData("Score", playerID, jsonString, 60);
 
 		flatbuffers::FlatBufferBuilder builder;
-		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SABE_SCORE);
-		builder.Finish(protocol::CreateRESPONSE_SABE_SCORE(builder, true));
+		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SAVE_SCORE);
+		builder.Finish(protocol::CreateRESPONSE_SAVE_SCORE(builder, true));
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
 		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
 
-		std::string log = "Send RESPONSE_SABE_SCORE : Success ";
+		std::string log = "Send RESPONSE_SAVE_SCORE : Success ";
 		Utility::Debug("Business", "Hub", log);
 	}
 
@@ -129,7 +130,6 @@ namespace Business
 		else
 		{
 			Business::Data_Ranking data_Ranking(playerRanking);
-
 			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, data_Ranking.rank, true, true));
 		}
 

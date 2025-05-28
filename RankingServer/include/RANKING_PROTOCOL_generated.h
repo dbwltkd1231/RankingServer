@@ -18,8 +18,8 @@ namespace protocol {
 struct REQUEST_SAVE_SCORE;
 struct REQUEST_SAVE_SCOREBuilder;
 
-struct RESPONSE_SABE_SCORE;
-struct RESPONSE_SABE_SCOREBuilder;
+struct RESPONSE_SAVE_SCORE;
+struct RESPONSE_SAVE_SCOREBuilder;
 
 struct REQUEST_PLAYER_RANKING;
 struct REQUEST_PLAYER_RANKINGBuilder;
@@ -33,7 +33,7 @@ struct RANKING_PROTOCOLBuilder;
 enum MESSAGETYPE : int32_t {
   MESSAGETYPE_BEGIN = 0,
   MESSAGETYPE_REQUEST_SAVE_SCORE = 1,
-  MESSAGETYPE_RESPONSE_SABE_SCORE = 2,
+  MESSAGETYPE_RESPONSE_SAVE_SCORE = 2,
   MESSAGETYPE_REQUEST_PLAYER_RANKING = 3,
   MESSAGETYPE_RESPONSE_PLAYER_RANKING = 4,
   MESSAGETYPE_END = 5,
@@ -45,7 +45,7 @@ inline const MESSAGETYPE (&EnumValuesMESSAGETYPE())[6] {
   static const MESSAGETYPE values[] = {
     MESSAGETYPE_BEGIN,
     MESSAGETYPE_REQUEST_SAVE_SCORE,
-    MESSAGETYPE_RESPONSE_SABE_SCORE,
+    MESSAGETYPE_RESPONSE_SAVE_SCORE,
     MESSAGETYPE_REQUEST_PLAYER_RANKING,
     MESSAGETYPE_RESPONSE_PLAYER_RANKING,
     MESSAGETYPE_END
@@ -57,7 +57,7 @@ inline const char * const *EnumNamesMESSAGETYPE() {
   static const char * const names[7] = {
     "BEGIN",
     "REQUEST_SAVE_SCORE",
-    "RESPONSE_SABE_SCORE",
+    "RESPONSE_SAVE_SCORE",
     "REQUEST_PLAYER_RANKING",
     "RESPONSE_PLAYER_RANKING",
     "END",
@@ -75,7 +75,7 @@ inline const char *EnumNameMESSAGETYPE(MESSAGETYPE e) {
 enum MessageContent : uint8_t {
   MessageContent_NONE = 0,
   MessageContent_REQUEST_SAVE_SCORE = 1,
-  MessageContent_RESPONSE_SABE_SCORE = 2,
+  MessageContent_RESPONSE_SAVE_SCORE = 2,
   MessageContent_REQUEST_PLAYER_RANKING = 3,
   MessageContent_RESPONSE_PLAYER_RANKING = 4,
   MessageContent_MIN = MessageContent_NONE,
@@ -86,7 +86,7 @@ inline const MessageContent (&EnumValuesMessageContent())[5] {
   static const MessageContent values[] = {
     MessageContent_NONE,
     MessageContent_REQUEST_SAVE_SCORE,
-    MessageContent_RESPONSE_SABE_SCORE,
+    MessageContent_RESPONSE_SAVE_SCORE,
     MessageContent_REQUEST_PLAYER_RANKING,
     MessageContent_RESPONSE_PLAYER_RANKING
   };
@@ -97,7 +97,7 @@ inline const char * const *EnumNamesMessageContent() {
   static const char * const names[6] = {
     "NONE",
     "REQUEST_SAVE_SCORE",
-    "RESPONSE_SABE_SCORE",
+    "RESPONSE_SAVE_SCORE",
     "REQUEST_PLAYER_RANKING",
     "RESPONSE_PLAYER_RANKING",
     nullptr
@@ -119,8 +119,8 @@ template<> struct MessageContentTraits<protocol::REQUEST_SAVE_SCORE> {
   static const MessageContent enum_value = MessageContent_REQUEST_SAVE_SCORE;
 };
 
-template<> struct MessageContentTraits<protocol::RESPONSE_SABE_SCORE> {
-  static const MessageContent enum_value = MessageContent_RESPONSE_SABE_SCORE;
+template<> struct MessageContentTraits<protocol::RESPONSE_SAVE_SCORE> {
+  static const MessageContent enum_value = MessageContent_RESPONSE_SAVE_SCORE;
 };
 
 template<> struct MessageContentTraits<protocol::REQUEST_PLAYER_RANKING> {
@@ -209,8 +209,8 @@ inline ::flatbuffers::Offset<REQUEST_SAVE_SCORE> CreateREQUEST_SAVE_SCOREDirect(
       last_update);
 }
 
-struct RESPONSE_SABE_SCORE FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef RESPONSE_SABE_SCOREBuilder Builder;
+struct RESPONSE_SAVE_SCORE FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RESPONSE_SAVE_SCOREBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_FEEDBACK = 4
   };
@@ -224,28 +224,28 @@ struct RESPONSE_SABE_SCORE FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Tabl
   }
 };
 
-struct RESPONSE_SABE_SCOREBuilder {
-  typedef RESPONSE_SABE_SCORE Table;
+struct RESPONSE_SAVE_SCOREBuilder {
+  typedef RESPONSE_SAVE_SCORE Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_feedback(bool feedback) {
-    fbb_.AddElement<uint8_t>(RESPONSE_SABE_SCORE::VT_FEEDBACK, static_cast<uint8_t>(feedback), 0);
+    fbb_.AddElement<uint8_t>(RESPONSE_SAVE_SCORE::VT_FEEDBACK, static_cast<uint8_t>(feedback), 0);
   }
-  explicit RESPONSE_SABE_SCOREBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit RESPONSE_SAVE_SCOREBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<RESPONSE_SABE_SCORE> Finish() {
+  ::flatbuffers::Offset<RESPONSE_SAVE_SCORE> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<RESPONSE_SABE_SCORE>(end);
+    auto o = ::flatbuffers::Offset<RESPONSE_SAVE_SCORE>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<RESPONSE_SABE_SCORE> CreateRESPONSE_SABE_SCORE(
+inline ::flatbuffers::Offset<RESPONSE_SAVE_SCORE> CreateRESPONSE_SAVE_SCORE(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     bool feedback = false) {
-  RESPONSE_SABE_SCOREBuilder builder_(_fbb);
+  RESPONSE_SAVE_SCOREBuilder builder_(_fbb);
   builder_.add_feedback(feedback);
   return builder_.Finish();
 }
@@ -420,8 +420,8 @@ struct RANKING_PROTOCOL FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const protocol::REQUEST_SAVE_SCORE *content_as_REQUEST_SAVE_SCORE() const {
     return content_type() == protocol::MessageContent_REQUEST_SAVE_SCORE ? static_cast<const protocol::REQUEST_SAVE_SCORE *>(content()) : nullptr;
   }
-  const protocol::RESPONSE_SABE_SCORE *content_as_RESPONSE_SABE_SCORE() const {
-    return content_type() == protocol::MessageContent_RESPONSE_SABE_SCORE ? static_cast<const protocol::RESPONSE_SABE_SCORE *>(content()) : nullptr;
+  const protocol::RESPONSE_SAVE_SCORE *content_as_RESPONSE_SAVE_SCORE() const {
+    return content_type() == protocol::MessageContent_RESPONSE_SAVE_SCORE ? static_cast<const protocol::RESPONSE_SAVE_SCORE *>(content()) : nullptr;
   }
   const protocol::REQUEST_PLAYER_RANKING *content_as_REQUEST_PLAYER_RANKING() const {
     return content_type() == protocol::MessageContent_REQUEST_PLAYER_RANKING ? static_cast<const protocol::REQUEST_PLAYER_RANKING *>(content()) : nullptr;
@@ -443,8 +443,8 @@ template<> inline const protocol::REQUEST_SAVE_SCORE *RANKING_PROTOCOL::content_
   return content_as_REQUEST_SAVE_SCORE();
 }
 
-template<> inline const protocol::RESPONSE_SABE_SCORE *RANKING_PROTOCOL::content_as<protocol::RESPONSE_SABE_SCORE>() const {
-  return content_as_RESPONSE_SABE_SCORE();
+template<> inline const protocol::RESPONSE_SAVE_SCORE *RANKING_PROTOCOL::content_as<protocol::RESPONSE_SAVE_SCORE>() const {
+  return content_as_RESPONSE_SAVE_SCORE();
 }
 
 template<> inline const protocol::REQUEST_PLAYER_RANKING *RANKING_PROTOCOL::content_as<protocol::REQUEST_PLAYER_RANKING>() const {
@@ -500,8 +500,8 @@ inline bool VerifyMessageContent(::flatbuffers::Verifier &verifier, const void *
       auto ptr = reinterpret_cast<const protocol::REQUEST_SAVE_SCORE *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case MessageContent_RESPONSE_SABE_SCORE: {
-      auto ptr = reinterpret_cast<const protocol::RESPONSE_SABE_SCORE *>(obj);
+    case MessageContent_RESPONSE_SAVE_SCORE: {
+      auto ptr = reinterpret_cast<const protocol::RESPONSE_SAVE_SCORE *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageContent_REQUEST_PLAYER_RANKING: {

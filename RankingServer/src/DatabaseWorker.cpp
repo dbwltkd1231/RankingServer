@@ -42,7 +42,7 @@ namespace Business
         }
         Utility::Debug("Business", "DatabaseWorker", "MSSQL Handle Create Success");
 
-        SQLWCHAR* connStr = (SQLWCHAR*)L"DRIVER={SQL Server};SERVER=DESKTOP-O5SU309\\SQLEXPRESS;DATABASE=RankingServer;Trusted_Connection=yes;"; //->windows인증일때 사용
+        SQLWCHAR* connStr = (SQLWCHAR*)L"DRIVER={SQL Server};SERVER=DESKTOP-O5SU309\\SQLEXPRESS;DATABASE=RankingDatabase;Trusted_Connection=yes;"; //->windows인증일때 사용
 
         //DB에 연결
         //->UNICODE 버전
@@ -80,12 +80,12 @@ namespace Business
 
 	void DatabaseWorker::DataLoadInSQL()
 	{
-        SQLWCHAR* tableQuery = (SQLWCHAR*)L"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = 'RankingServer';";
+        SQLWCHAR* tableQuery = (SQLWCHAR*)L"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = 'RankingDatabase';";
         SQLRETURN ret = SQLExecDirectW(mHstmt, tableQuery, SQL_NTS);
 
         if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
         {
-            Utility::Debug("Business", "DatabaseWorker", "RankingServer Table Find...");
+            Utility::Debug("Business", "DatabaseWorker", "RankingDatabase Table Find...");
 
             SQLWCHAR tableName[256];
             while (SQLFetch(mHstmt) == SQL_SUCCESS)
@@ -96,7 +96,7 @@ namespace Business
                 Utility::Debug("Business", "DatabaseWorker", log);
             }
 
-            Utility::Debug("Business", "DatabaseWorker", "RankingServer Table Find End.");
+            Utility::Debug("Business", "DatabaseWorker", "RankingDatabase Table Find End.");
         }
         else
         {
@@ -147,7 +147,7 @@ namespace Business
             Utility::Debug("Business", "DatabaseWorker", log);
         }
     }
-
+    
     void DatabaseWorker::RankingUpdate()
     {
         SQLAllocHandle(SQL_HANDLE_STMT, mHdbc, &mHstmt);
@@ -192,7 +192,7 @@ namespace Business
                 auto rankingJson = Data_Ranking::toJson(rank, id_String);
                 std::string jsonString = rankingJson.dump(); // JSON을 문자열로 변환
 
-                SetCachedData(tableName, id_String, jsonString, 60); // SQL에선 rank를 key로 하고있는데 Redis에선 id를 key로...
+                SetCachedData(tableName, id_String, jsonString, 600); // SQL에선 rank를 key로 하고있는데 Redis에선 id를 key로...
                 count++;
             }
 
