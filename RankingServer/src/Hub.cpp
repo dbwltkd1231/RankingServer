@@ -76,6 +76,7 @@ namespace Business
 	{
 		std::string log = std::to_string(interval) + "분 경과, 데이터 저장 및 랭킹 업데이트 시작";
 
+
 		while (true)
 		{
 			Utility::Debug("RankingServer", "Main", "랭킹 업데이트 대기중...");
@@ -111,38 +112,25 @@ namespace Business
 	{
 		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_PLAYER_RANKING);
 		auto playerRanking = databaseWorker.GetCachedData("Ranking", playerID);
-		auto playerScore = databaseWorker.GetCachedData("Score", playerID);
 
 		flatbuffers::FlatBufferBuilder builder;
 		auto id = builder.CreateString(playerID);
-		int score = 0;
-
-		if (playerScore == "")
+		int currentScore = 0;
+		if (playerRanking == "")
 		{
-			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, 0, 0, false, false));
-
+			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, currentScore, 0, false, true));
 		}
 		else
 		{
-			Business::Data_Score data_Score(playerScore);
-			score = data_Score.score;
-
-			if (playerRanking == "")
-			{
-				builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, 0, false, true));
-			}
-			else
-			{
-				Business::Data_Ranking data_Ranking(playerRanking);
-		
-				builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, score, data_Ranking.rank, true, true));
-			}
+			Business::Data_Ranking data_Ranking(playerRanking);
+			currentScore = data_Ranking.score;
+			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, currentScore, data_Ranking.rank, true, true));
 		}
 
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
 		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
 
-		std::string log = "Send RESPONSE_PLAYER_RANKING - ID: " + playerID + " Score: " + std::to_string(score);
+		std::string log = "Send RESPONSE_PLAYER_RANKING - ID: " + playerID + " Score: " + std::to_string(currentScore);
 		Utility::Debug("Business", "Hub", log);
 	}
 }

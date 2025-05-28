@@ -35,19 +35,22 @@ namespace Business
     {
         int rank;
         std::string playerId;
+        int score;
 
         Data_Ranking(const nlohmann::json& jsonStr)
         {
             rank = jsonStr["rank"];
             playerId = jsonStr["player_id"];
+            score = jsonStr["score"];
         }
 
-        nlohmann::json static toJson(int rank, std::string id)
+        nlohmann::json static toJson(int rank, std::string id, int score)
         {
             nlohmann::json rankingJson =
             {
                  {"rank", rank},
                  {"player_id", id},
+                 {"score", score}
             };
 
             return rankingJson;

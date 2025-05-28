@@ -173,7 +173,7 @@ namespace Business
         std::string tableName = "Ranking";
         Utility::Debug("Business", "DatabaseWorker", "Ranking Data Caching...");
 
-        std::wstring queryStr = L"SELECT TOP 100 rank, player_id FROM " + std::wstring(tableName.begin(), tableName.end());
+        std::wstring queryStr = L"SELECT TOP 100 rank, player_id, score FROM " + std::wstring(tableName.begin(), tableName.end());
         SQLWCHAR* dataQuery = (SQLWCHAR*)queryStr.c_str();
         SQLRETURN dataRet = SQLExecDirectW(mHstmt, dataQuery, SQL_NTS);
 
@@ -181,15 +181,18 @@ namespace Business
         {
             int rank;
             SQLWCHAR id[16];
+            int score;
+
             int count = 0;
             while (SQLFetch(mHstmt) == SQL_SUCCESS)
             {
                 SQLGetData(mHstmt, 1, SQL_C_LONG, &rank, 0, NULL);
                 SQLGetData(mHstmt, 2, SQL_C_WCHAR, &id, sizeof(id), NULL);
+                SQLGetData(mHstmt, 3, SQL_C_LONG, &score, 0, NULL);
 
                 std::string id_String = Utility::Converter::WstringToUTF8(id);
 
-                auto rankingJson = Data_Ranking::toJson(rank, id_String);
+                auto rankingJson = Data_Ranking::toJson(rank, id_String, score);
                 std::string jsonString = rankingJson.dump(); // JSON을 문자열로 변환
 
                 SetCachedData(tableName, id_String, jsonString, 600); // SQL에선 rank를 key로 하고있는데 Redis에선 id를 key로...
