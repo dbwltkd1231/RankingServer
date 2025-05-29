@@ -61,12 +61,14 @@ namespace Business
 
 			auto  requestSaveScore = flatbuffers::GetRoot<protocol::REQUEST_SAVE_SCORE>(bodyBuffer);
 			std::time_t unixDate = static_cast<std::time_t>(requestSaveScore->last_update());
-			Response_SaveScore(socketId, requestSaveScore->player_id()->str(), requestSaveScore->score(), unixDate);
+			std::time_t koreaTime = unixDate + (9 * 3600);  // UTC+9 → 한국 시간 변환
+
+			Response_SaveScore(socketId, requestSaveScore->player_id()->str(), requestSaveScore->score(), koreaTime);
 			break;
 		}
 		default:
 		{
-			//Utility::Debug("Business", "Hub", "Read : CONTENTS TYPE ERROR !!!!!");
+			Utility::Debug("Business", "Hub", "Read : CONTENTS TYPE ERROR !!!!!");
 			break;
 		}
 		}

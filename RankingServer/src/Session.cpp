@@ -95,7 +95,7 @@ namespace Network
 					auto socketId = completionKey;
 					auto requestBodySize = ntohl(receivedHeader->mBodySize);
 					auto requestContentsType = ntohl(receivedHeader->mContentsType);
-
+					
 					receiveCallback(socketId, requestBodySize, requestContentsType, overlapped->mWsabuf[1].buf);
 				}
 
