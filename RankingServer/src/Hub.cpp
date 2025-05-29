@@ -14,9 +14,9 @@ namespace Business
 
 	void Hub::Initialize(std::string ip, int port, u_short redisPort, int socketMax)
 	{
-		databaseWorker.Initalize();
-		databaseWorker.RedisConnect(ip, redisPort);
-		databaseWorker.DataLoadInSQL();
+		mDatabaseWorker.Initalize();
+		mDatabaseWorker.RedisConnect(ip, redisPort);
+		mDatabaseWorker.DataLoadInSQL();
 
 		mReceiveCallback = std::function<void(uint32_t, uint32_t, uint32_t, char*)>(
 			[this](uint32_t socketId, uint32_t bodySize, uint32_t contentsType, char* bodyBuffer) {
@@ -30,8 +30,8 @@ namespace Business
 			}
 		);
 
-		networkManager.Initialize(port, socketMax);
-		networkManager.Ready(mReceiveCallback);
+		mNetworkManager.Initialize(port, socketMax);
+		mNetworkManager.Ready(mReceiveCallback);
 		mRankingSystem.Ready(mSendCallback);
 	}
 
@@ -51,17 +51,17 @@ namespace Business
 		{
 			Utility::Debug("Business", "Hub", "Read : REQUEST_PLAYER_RANKING");
 
-			auto message_wrapper = flatbuffers::GetRoot<protocol::REQUEST_PLAYER_RANKING>(bodyBuffer); // FlatBuffers 버퍼에서 루트 객체 가져오기
-			Response_PlayerRanking(socketId, message_wrapper->player_id()->str());
+			auto requestPlayerRanking = flatbuffers::GetRoot<protocol::REQUEST_PLAYER_RANKING>(bodyBuffer); // FlatBuffers 버퍼에서 루트 객체 가져오기
+			Response_PlayerRanking(socketId, requestPlayerRanking->player_id()->str());
 			break;
 		}
 		case protocol::MessageContent_REQUEST_SAVE_SCORE:
 		{
 			Utility::Debug("Business", "Hub", "Read : REQUEST_SAVE_SCORE");
 
-			auto  REQUEST_SAVE_SCORE = flatbuffers::GetRoot<protocol::REQUEST_SAVE_SCORE>(bodyBuffer);
-			std::time_t timeTValue = static_cast<std::time_t>(REQUEST_SAVE_SCORE->last_update()); // 변환
-			Response_SaveScore(socketId, REQUEST_SAVE_SCORE->player_id()->str(), REQUEST_SAVE_SCORE->score(), timeTValue);
+			auto  requestSaveScore = flatbuffers::GetRoot<protocol::REQUEST_SAVE_SCORE>(bodyBuffer);
+			std::time_t unixDate = static_cast<std::time_t>(requestSaveScore->last_update());
+			Response_SaveScore(socketId, requestSaveScore->player_id()->str(), requestSaveScore->score(), unixDate);
 			break;
 		}
 		default:
@@ -76,16 +76,15 @@ namespace Business
 	{
 		std::string log = std::to_string(interval) + "분 경과, 데이터 저장 및 랭킹 업데이트 시작";
 
-
 		while (true)
 		{
 			Utility::Debug("RankingServer", "Main", "랭킹 업데이트 대기중...");
 			std::this_thread::sleep_for(std::chrono::minutes(interval));
 			Utility::Debug("RankingServer", "Main", log);
 
-			databaseWorker.ScoreDataSave();
-			databaseWorker.RankingUpdate();
-			databaseWorker.RankingDataLoad();
+			mDatabaseWorker.ScoreDataSave();
+			mDatabaseWorker.RankingUpdate();
+			mDatabaseWorker.RankingDataLoad();
 		}
 	}
 
@@ -94,27 +93,27 @@ namespace Business
 		auto scoreJson = Data_Score::toJson(playerID, newScore, unixUpdateDate);
 		std::string jsonString = scoreJson.dump();
 
-		databaseWorker.SetCachedData("Score", playerID, jsonString, 60);
+		mDatabaseWorker.SetCachedData("Score", playerID, jsonString, 60);
 
 		flatbuffers::FlatBufferBuilder builder;
-		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SAVE_SCORE);
+		auto contentsType = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_SAVE_SCORE);
 		auto id = builder.CreateString(playerID);
 
 		builder.Finish(protocol::CreateRESPONSE_SAVE_SCORE(builder, id, true));
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
-		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
+		mNetworkManager.Send(socketId, contentsType, bodyBuffer, builder.GetSize());
 
 		std::string log = "Send RESPONSE_SAVE_SCORE : Success ";
 		Utility::Debug("Business", "Hub", log);
 	}
 
-	void Hub::Response_PlayerRanking(uint32_t socketId, std::string playerID)
+	void Hub::Response_PlayerRanking(uint32_t socketId, std::string playerId)
 	{
-		auto response_contents_type = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_PLAYER_RANKING);
-		auto playerRanking = databaseWorker.GetCachedData("Ranking", playerID);
+		auto contentsType = static_cast<uint32_t>(protocol::MessageContent_RESPONSE_PLAYER_RANKING);
+		auto playerRanking = mDatabaseWorker.GetCachedData("Ranking", playerId);
 
 		flatbuffers::FlatBufferBuilder builder;
-		auto id = builder.CreateString(playerID);
+		auto id = builder.CreateString(playerId);
 		int currentScore = 0;
 		if (playerRanking == "")
 		{
@@ -123,14 +122,14 @@ namespace Business
 		else
 		{
 			Business::Data_Ranking data_Ranking(playerRanking);
-			currentScore = data_Ranking.score;
-			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, currentScore, data_Ranking.rank, true, true));
+			currentScore = data_Ranking.mScore;
+			builder.Finish(protocol::CreateRESPONSE_PLAYER_RANKING(builder, id, currentScore, data_Ranking.mRrank, true, true));
 		}
 
 		char* bodyBuffer = reinterpret_cast<char*>(builder.GetBufferPointer());
-		networkManager.Send(socketId, response_contents_type, bodyBuffer, builder.GetSize());
+		mNetworkManager.Send(socketId, contentsType, bodyBuffer, builder.GetSize());
 
-		std::string log = "Send RESPONSE_PLAYER_RANKING - ID: " + playerID + " Score: " + std::to_string(currentScore);
+		std::string log = "Send RESPONSE_PLAYER_RANKING - ID: " + playerId + " Score: " + std::to_string(currentScore);
 		Utility::Debug("Business", "Hub", log);
 	}
 }

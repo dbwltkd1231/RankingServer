@@ -7,15 +7,15 @@ namespace Business
 {
     struct Data_Score
     {
-        std::string playerId;
-        int score;
-        long long last_update;
+        std::string mPlayerId;
+        int mScore;
+        long long mLastUpdate;
 
         Data_Score(const nlohmann::json& jsonStr)
         {
-            playerId = jsonStr["player_id"];
-            score = jsonStr["score"];
-            last_update = jsonStr["last_update"];
+            mPlayerId = jsonStr["player_id"];
+            mScore = jsonStr["score"];
+            mLastUpdate = jsonStr["last_update"];
         }
 
         nlohmann::json static toJson(std::string id, int score, std::time_t last_update)
@@ -33,15 +33,15 @@ namespace Business
 
     struct Data_Ranking
     {
-        int rank;
-        std::string playerId;
-        int score;
+        int mRrank;
+        std::string mPlayerId;
+        int mScore;
 
         Data_Ranking(const nlohmann::json& jsonStr)
         {
-            rank = jsonStr["rank"];
-            playerId = jsonStr["player_id"];
-            score = jsonStr["score"];
+            mRrank = jsonStr["rank"];
+            mPlayerId = jsonStr["player_id"];
+            mScore = jsonStr["score"];
         }
 
         nlohmann::json static toJson(int rank, std::string id, int score)

@@ -32,8 +32,7 @@ namespace Business
 		SQLHDBC mHdbc;
 		SQLHSTMT mHstmt;
 		redisContext* mRedis;
+
 		void ScoreDataLoad();
-
-
 	};
 }

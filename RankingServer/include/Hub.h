@@ -21,8 +21,8 @@ namespace Business
 
 	private:
 		Business::RankingSystem mRankingSystem;
-		Business::DatabaseWorker databaseWorker;
-		Network::NetworkManager networkManager;
+		Business::DatabaseWorker mDatabaseWorker;
+		Network::NetworkManager mNetworkManager;
 
 		std::function<void(uint32_t, uint32_t, uint32_t, char*)> mReceiveCallback;
 		std::function<void(uint32_t, uint32_t, char*)> mSendCallback;

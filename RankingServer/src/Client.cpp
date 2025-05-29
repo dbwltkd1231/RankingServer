@@ -5,26 +5,26 @@ namespace Network
 {
 	Client::Client()
 	{
-		mSocket_ID = -1;
+		mSocketId = -1;
 		mClientSocketPtr = nullptr;
 
-		mReceive_HeaderBuffer = new char[sizeof(MessageHeader)];
-		mReceive_BodyBuffer = new char[BUFFER_SIZE];
+		mReceiveHeaderBuffer = new char[sizeof(MessageHeader)];
+		mReceiveBodyBuffer = new char[BUFFER_SIZE];
 
-		mSend_HeaderBuffer = new char[sizeof(MessageHeader)];
-		mSend_BodyBuffer = new char[BUFFER_SIZE];
+		mSendHeaderBuffer = new char[sizeof(MessageHeader)];
+		mSendBodyBuffer = new char[BUFFER_SIZE];
 
 	}
 	Client::~Client()
 	{
-		mSocket_ID = -1;
+		mSocketId = -1;
 		mClientSocketPtr = nullptr;
 
-		delete[] mReceive_HeaderBuffer;
-		delete[] mReceive_BodyBuffer;
+		delete[] mReceiveHeaderBuffer;
+		delete[] mReceiveBodyBuffer;
 
-		delete[] mSend_HeaderBuffer;
-		delete[] mSend_BodyBuffer;
+		delete[] mSendHeaderBuffer;
+		delete[] mSendBodyBuffer;
 	}
 
 	void Client::Initialize(
@@ -34,7 +34,7 @@ namespace Network
 	{
 		mClientSocketPtr = clientSocketPtr;
 		mOverlappedQueue = overlappedQueue;
-		mSocket_ID = socketID;
+		mSocketId = socketID;
 	}
 
 	void Client::Deinitialize()
@@ -53,29 +53,29 @@ namespace Network
 			return false;
 		}
 
-		memset(mReceive_HeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mReceive_BodyBuffer, 0, BUFFER_SIZE);
+		memset(mReceiveHeaderBuffer, 0, sizeof(MessageHeader));
+		memset(mReceiveBodyBuffer, 0, BUFFER_SIZE);
 
 		auto overlapped = mOverlappedQueue->pop();
 		overlapped->mOperationType = Network::OperationType::OP_ACCEPT;
 
-		MessageHeader newHeader(mSocket_ID, 0, 0);
-		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
-		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
+		MessageHeader newHeader(mSocketId, 0, 0);
+		std::memcpy(mReceiveHeaderBuffer, &newHeader, sizeof(MessageHeader));
+		overlapped->SetHeader(mReceiveHeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mReceiveBodyBuffer, BUFFER_SIZE);
 		overlapped->hEvent = NULL;
 		DWORD bytesReceived = 0;
-		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->wsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
+		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->mWsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
 
 		std::string log;
 		errorCode = WSAGetLastError();
 		if (result == SOCKET_ERROR && errorCode != WSA_IO_PENDING)
 		{
-			log = std::to_string(mSocket_ID) + "AcceptEx 실패! 오류 코드: " + std::to_string(errorCode);
+			log = std::to_string(mSocketId) + "AcceptEx 실패! 오류 코드: " + std::to_string(errorCode);
 		}
 		else
 		{
-			log = std::to_string(mSocket_ID) + " Socket Accept Ready";
+			log = std::to_string(mSocketId) + " Socket Accept Ready";
 		}
 		Utility::Debug("Network", "Client", log);
 	}
@@ -94,27 +94,27 @@ namespace Network
 		auto overlapped = mOverlappedQueue->pop();
 		overlapped->mOperationType = Network::OperationType::OP_RECV;
 
-		memset(mReceive_HeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mReceive_BodyBuffer, 0, BUFFER_SIZE);
+		memset(mReceiveHeaderBuffer, 0, sizeof(MessageHeader));
+		memset(mReceiveBodyBuffer, 0, BUFFER_SIZE);
 		
-		MessageHeader newHeader(mSocket_ID, 0, 0);
-		std::memcpy(mReceive_HeaderBuffer, &newHeader, sizeof(MessageHeader));
-		overlapped->SetHeader(mReceive_HeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mReceive_BodyBuffer, BUFFER_SIZE);
+		MessageHeader newHeader(mSocketId, 0, 0);
+		std::memcpy(mReceiveHeaderBuffer, &newHeader, sizeof(MessageHeader));
+		overlapped->SetHeader(mReceiveHeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mReceiveBodyBuffer, BUFFER_SIZE);
 		overlapped->hEvent = NULL;
 
 		DWORD flags = 0;
-		int result = WSARecv(*mClientSocketPtr, overlapped->wsabuf, 2, nullptr, &flags, &*overlapped, nullptr);
+		int result = WSARecv(*mClientSocketPtr, overlapped->mWsabuf, 2, nullptr, &flags, &*overlapped, nullptr);
 
 		std::string log;
 		errorCode = WSAGetLastError();
 		if (result == SOCKET_ERROR && errorCode != WSA_IO_PENDING)
 		{
-			log = std::to_string(mSocket_ID) + "WSARecv 실패! 오류 코드: " + std::to_string(errorCode);
+			log = std::to_string(mSocketId) + "WSARecv 실패! 오류 코드: " + std::to_string(errorCode);
 		}
 		else
 		{
-			log = std::to_string(mSocket_ID) + " Socket Receive Ready";
+			log = std::to_string(mSocketId) + " Socket Receive Ready";
 		}
 
 		Utility::Debug("Network", "Client", log);
@@ -128,24 +128,24 @@ namespace Network
 			return;
 		}
 
-		memset(mSend_HeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mSend_BodyBuffer, 0, BUFFER_SIZE);
+		memset(mSendHeaderBuffer, 0, sizeof(MessageHeader));
+		memset(mSendBodyBuffer, 0, BUFFER_SIZE);
 
-		std::memcpy(mSend_HeaderBuffer, &header, sizeof(MessageHeader));
-		std::memcpy(mSend_BodyBuffer, bodyBuffer, bodySize);
+		std::memcpy(mSendHeaderBuffer, &header, sizeof(MessageHeader));
+		std::memcpy(mSendBodyBuffer, bodyBuffer, bodySize);
 
 		auto overlapped = mOverlappedQueue->pop();
 		overlapped->mOperationType = Network::OperationType::OP_SEND;
-		overlapped->SetHeader(mSend_HeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mSend_BodyBuffer, bodySize);
+		overlapped->SetHeader(mSendHeaderBuffer, sizeof(MessageHeader));
+		overlapped->SetBody(mSendBodyBuffer, bodySize);
 		overlapped->hEvent = NULL;
 
 		DWORD flags = 0;
-		int result = WSASend(*mClientSocketPtr, overlapped->wsabuf, 2, nullptr, flags, &*overlapped, nullptr);
+		int result = WSASend(*mClientSocketPtr, overlapped->mWsabuf, 2, nullptr, flags, &*overlapped, nullptr);
 		int errorCode = WSAGetLastError();
 		if (result == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 		{
-			std::string log = std::to_string(mSocket_ID) + "WSASend 실패! 오류 코드: " + std::to_string(errorCode);
+			std::string log = std::to_string(mSocketId) + "WSASend 실패! 오류 코드: " + std::to_string(errorCode);
 			Utility::Debug("Network", "Client", log);
 			return;
 		}

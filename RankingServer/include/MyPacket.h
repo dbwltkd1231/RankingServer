@@ -18,16 +18,16 @@ namespace Network
 
     struct MessageHeader
     {
-        uint32_t socket_id;
-        uint32_t body_size;
-        uint32_t contents_type;
+        uint32_t mSocketId;
+        uint32_t mBodySize;
+        uint32_t mContentsType;
 
-        MessageHeader(uint32_t socketID, uint32_t bodySize, uint32_t contentsType) : socket_id(socketID), body_size(bodySize), contents_type(contentsType)
+        MessageHeader(uint32_t socketID, uint32_t bodySize, uint32_t contentsType) : mSocketId(socketID), mBodySize(bodySize), mContentsType(contentsType)
         {
 
         }
 
-        MessageHeader(const MessageHeader& other) : socket_id(other.socket_id), body_size(other.body_size), contents_type(other.contents_type)
+        MessageHeader(const MessageHeader& other) : mSocketId(other.mSocketId), mBodySize(other.mBodySize), mContentsType(other.mContentsType)
         {
         }
     };
@@ -35,28 +35,28 @@ namespace Network
     // buffer을 Overlapped 구조체가 직접 가지고 있을 경우 초기화 관리가 어려운것같아 Client객체에서 관리하도록 시도하였습니다.
     struct CustomOverlapped :OVERLAPPED
     {
-        WSABUF wsabuf[2];
-        SOCKET* socket;
+        WSABUF mWsabuf[2];
+        SOCKET* mSocketPtr;
         OperationType mOperationType;
 
         CustomOverlapped()
         {
-            socket = nullptr;
-            wsabuf[0].buf = nullptr;
-            wsabuf[0].len = 0;
-            wsabuf[1].buf = nullptr;
-            wsabuf[1].len = 0;
+            mSocketPtr = nullptr;
+            mWsabuf[0].buf = nullptr;
+            mWsabuf[0].len = 0;
+            mWsabuf[1].buf = nullptr;
+            mWsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
 			this->hEvent = NULL;
         }
 
         ~CustomOverlapped()
         {
-            socket = nullptr;
-            wsabuf[0].buf = nullptr;
-            wsabuf[0].len = 0;
-            wsabuf[1].buf = nullptr;
-            wsabuf[1].len = 0;
+            mSocketPtr = nullptr;
+            mWsabuf[0].buf = nullptr;
+            mWsabuf[0].len = 0;
+            mWsabuf[1].buf = nullptr;
+            mWsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
             this->hEvent = NULL;
         }
@@ -66,26 +66,26 @@ namespace Network
         {
 			this->hEvent = other.hEvent;
 
-            if (other.wsabuf[0].len > 0)
+            if (other.mWsabuf[0].len > 0)
             {
-                wsabuf[0].buf = other.wsabuf[0].buf;
-                wsabuf[0].len = other.wsabuf[0].len;
+                mWsabuf[0].buf = other.mWsabuf[0].buf;
+                mWsabuf[0].len = other.mWsabuf[0].len;
             }
             else
             {
-                wsabuf[0].buf = nullptr;
-                wsabuf[0].len = 0;
+                mWsabuf[0].buf = nullptr;
+                mWsabuf[0].len = 0;
             }
 
-            if (other.wsabuf[1].len > 0)
+            if (other.mWsabuf[1].len > 0)
             {
-                wsabuf[1].buf = other.wsabuf[1].buf;
-                wsabuf[1].len = other.wsabuf[1].len;
+                mWsabuf[1].buf = other.mWsabuf[1].buf;
+                mWsabuf[1].len = other.mWsabuf[1].len;
             }
             else
             {
-                wsabuf[1].buf = nullptr;
-                wsabuf[1].len = 0;
+                mWsabuf[1].buf = nullptr;
+                mWsabuf[1].len = 0;
             }
 
             mOperationType = other.mOperationType;
@@ -93,14 +93,14 @@ namespace Network
 
         void SetHeader(char* headerBuffer, ULONG headerLen)
         {
-            wsabuf[0].buf = headerBuffer;
-            wsabuf[0].len = headerLen;
+            mWsabuf[0].buf = headerBuffer;
+            mWsabuf[0].len = headerLen;
         }
 
         void SetBody(char* bodyBuffer, ULONG bodyLen)
         {
-            wsabuf[1].buf = bodyBuffer;
-            wsabuf[1].len = bodyLen;
+            mWsabuf[1].buf = bodyBuffer;
+            mWsabuf[1].len = bodyLen;
         }
 
 		void SetOperationType(OperationType operationType)
@@ -110,10 +110,10 @@ namespace Network
 
         void Clear()
         {
-            wsabuf[0].buf = nullptr;
-            wsabuf[0].len = 0;
-            wsabuf[1].buf = nullptr;
-            wsabuf[1].len = 0;
+            mWsabuf[0].buf = nullptr;
+            mWsabuf[0].len = 0;
+            mWsabuf[1].buf = nullptr;
+            mWsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
             this->hEvent = NULL;
         }

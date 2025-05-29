@@ -48,9 +48,9 @@ namespace Network
 			{
 			case OperationType::OP_ACCEPT:
 			{
-				MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->wsabuf[0].buf);
+				MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->mWsabuf[0].buf);
 
-				auto clientFinder = clientMap.get()->find(receivedHeader->socket_id);
+				auto clientFinder = clientMap.get()->find(receivedHeader->mSocketId);
 
 				if (clientFinder == clientMap->end())
 				{
@@ -60,7 +60,7 @@ namespace Network
 
 				auto client = clientFinder->second;
 
-				std::string log = std::to_string(receivedHeader->socket_id) + " Socket Connected Success !";
+				std::string log = std::to_string(receivedHeader->mSocketId) + " Socket Connected Success !";
 				Utility::Debug("Network", "Session", log);
 
 				overlapped->Clear();
@@ -87,16 +87,16 @@ namespace Network
 				}
 				else
 				{
-					MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->wsabuf[0].buf);
+					MessageHeader* receivedHeader = reinterpret_cast<MessageHeader*>(overlapped->mWsabuf[0].buf);
 
 					std::string log = std::to_string(completionKey) + " Socket Recv Success";
 					Utility::Debug("Network", "Session", log);
 
-					auto socket_id = completionKey;
-					auto request_body_size = ntohl(receivedHeader->body_size);
-					auto request_contents_type = ntohl(receivedHeader->contents_type);
+					auto socketId = completionKey;
+					auto requestBodySize = ntohl(receivedHeader->mBodySize);
+					auto requestContentsType = ntohl(receivedHeader->mContentsType);
 
-					receiveCallback(socket_id, request_body_size, request_contents_type, overlapped->wsabuf[1].buf);
+					receiveCallback(socketId, requestBodySize, requestContentsType, overlapped->mWsabuf[1].buf);
 				}
 
 				overlapped->Clear();

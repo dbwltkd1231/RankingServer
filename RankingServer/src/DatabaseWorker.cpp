@@ -122,24 +122,24 @@ namespace Business
         {
             SQLWCHAR id[16];
             int score;
-            TIMESTAMP_STRUCT last_update;
+            TIMESTAMP_STRUCT lastUpdate;
 
             int count = 0;
             while (SQLFetch(mHstmt) == SQL_SUCCESS)
             {
                 SQLGetData(mHstmt, 1, SQL_C_WCHAR, &id, sizeof(id), NULL);
                 SQLGetData(mHstmt, 2, SQL_C_LONG, &score, 0, NULL);
-                SQLGetData(mHstmt, 3, SQL_C_TYPE_TIMESTAMP, &last_update, sizeof(TIMESTAMP_STRUCT), NULL);
+                SQLGetData(mHstmt, 3, SQL_C_TYPE_TIMESTAMP, &lastUpdate, sizeof(TIMESTAMP_STRUCT), NULL);
 
-                std::string id_String = Utility::Converter::WstringToUTF8(id);
-                std::tm timeinfo = { last_update.second, last_update.minute, last_update.hour, last_update.day, last_update.month - 1, last_update.year - 1900 };
+                std::string idString = Utility::Converter::WstringToUTF8(id);
+                std::tm timeinfo = { lastUpdate.second, lastUpdate.minute, lastUpdate.hour, lastUpdate.day, lastUpdate.month - 1, lastUpdate.year - 1900 };
                 std::time_t localTime = std::mktime(&timeinfo); // 로컬 시간 변환
                 std::time_t utcTime = _mkgmtime(&timeinfo); // UTC 기준으로 변환
 
-                auto scoreJson = Data_Score::toJson(id_String, score, utcTime);
+                auto scoreJson = Data_Score::toJson(idString, score, utcTime);
                 std::string jsonString = scoreJson.dump(); // JSON을 문자열로 변환
 
-                SetCachedData(tableName, id_String, jsonString, 60); // 60초 TTL 설정);
+                SetCachedData(tableName, idString, jsonString, 600); // 600초 TTL 설정);
                 count++;
             }
 
@@ -190,12 +190,12 @@ namespace Business
                 SQLGetData(mHstmt, 2, SQL_C_WCHAR, &id, sizeof(id), NULL);
                 SQLGetData(mHstmt, 3, SQL_C_LONG, &score, 0, NULL);
 
-                std::string id_String = Utility::Converter::WstringToUTF8(id);
+                std::string idString = Utility::Converter::WstringToUTF8(id);
 
-                auto rankingJson = Data_Ranking::toJson(rank, id_String, score);
+                auto rankingJson = Data_Ranking::toJson(rank, idString, score);
                 std::string jsonString = rankingJson.dump(); // JSON을 문자열로 변환
 
-                SetCachedData(tableName, id_String, jsonString, 600); // SQL에선 rank를 key로 하고있는데 Redis에선 id를 key로...
+                SetCachedData(tableName, idString, jsonString, 600); // SQL에선 rank를 key로 하고있는데 Redis에선 id를 key로...
                 count++;
             }
 
@@ -235,7 +235,7 @@ namespace Business
     void DatabaseWorker::ScoreDataSave()
     {
         std::string tableName = "Score";
-        int TIMESTAMP_STR_LENGTH = 19;
+        int timeStampStringLength = 19;
 
         std::wstring query = Utility::Converter::ConvertToSQLWCHAR(
             "MERGE INTO Score AS target "
@@ -281,19 +281,19 @@ namespace Business
                             std::string result = replyData->str;
                             nlohmann::json jsonData = nlohmann::json::parse(result);
 
-                            std::string player_id = jsonData["player_id"];
+                            std::string playerId = jsonData["player_id"];
                             int score = jsonData["score"];
 
-                            std::time_t last_update = jsonData["last_update"];
+                            std::time_t lastUpdate = jsonData["last_update"];
                             std::tm timeinfo;
-                            gmtime_s(&timeinfo, &last_update);
+                            gmtime_s(&timeinfo, &lastUpdate);
                             std::ostringstream oss;
                             oss << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S");
                             std::string timestampStr = oss.str();
 
-                            SQLBindParameter(mHstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 16, 0, (SQLPOINTER)player_id.c_str(), player_id.length(), nullptr);
+                            SQLBindParameter(mHstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 16, 0, (SQLPOINTER)playerId.c_str(), playerId.length(), nullptr);
                             SQLBindParameter(mHstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 16, 0, &score, 0, nullptr);
-                            SQLBindParameter(mHstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, TIMESTAMP_STR_LENGTH, 0, (SQLPOINTER)timestampStr.c_str(), timestampStr.length(), nullptr);
+                            SQLBindParameter(mHstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, timeStampStringLength, 0, (SQLPOINTER)timestampStr.c_str(), timestampStr.length(), nullptr);
 
                             SQLRETURN ret = SQLExecute(mHstmt);
                             if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)

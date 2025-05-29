@@ -9,17 +9,17 @@ namespace Utility
     class Converter
     {
     public:
-        static std::string ConvertEUC_KRtoUTF8(const std::string& euc_kr_str);
-        static std::string ConvertUTF8toEUC_KR(const std::string& utf8_str);
+        static std::string ConvertEUC_KRtoUTF8(const std::string& eucStr);
+        static std::string ConvertUTF8toEUC_KR(const std::string& utf8Str);
         static std::string WstringToUTF8(const std::wstring& wstr);
         static std::string StringConvert(std::wstring ws);
         static  std::wstring ConvertToSQLWCHAR(const std::string& str);
     };
 
-    std::string Converter::ConvertEUC_KRtoUTF8(const std::string& euc_kr_str)
+    std::string Converter::ConvertEUC_KRtoUTF8(const std::string& eucStr)
     {
         // EUC-KR → WideChar 변환
-        int wide_size = MultiByteToWideChar(949, 0, euc_kr_str.c_str(), -1, nullptr, 0);
+        int wide_size = MultiByteToWideChar(949, 0, eucStr.c_str(), -1, nullptr, 0);
         if (wide_size == 0)
         {
             // 변환 실패
@@ -27,7 +27,7 @@ namespace Utility
         }
 
         std::wstring wide_str(wide_size, 0);
-        MultiByteToWideChar(949, 0, euc_kr_str.c_str(), -1, &wide_str[0], wide_size);
+        MultiByteToWideChar(949, 0, eucStr.c_str(), -1, &wide_str[0], wide_size);
 
         std::cout << std::endl;
 
@@ -44,12 +44,12 @@ namespace Utility
         return utf8_str;
     }
 
-    std::string Converter::ConvertUTF8toEUC_KR(const std::string& utf8_str)
+    std::string Converter::ConvertUTF8toEUC_KR(const std::string& utf8Str)
     {
         // UTF-8 → WideChar 변환
-        int wide_size = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
+        int wide_size = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, nullptr, 0);
         std::wstring wide_str(wide_size, 0);
-        MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, &wide_str[0], wide_size);
+        MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, &wide_str[0], wide_size);
         // WideChar → EUC-KR 변환
         int euc_kr_size = WideCharToMultiByte(949, 0, wide_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
         std::string euc_kr_str(euc_kr_size, 0);

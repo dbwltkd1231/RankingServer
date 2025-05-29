@@ -31,13 +31,13 @@ namespace Network
 		void Send(const MessageHeader& header, const char* bodyBuffer, int bodySize);
 
 	private:
-		int mSocket_ID;
+		int mSocketId;
 		std::shared_ptr<SOCKET> mClientSocketPtr;
 		std::shared_ptr<Utility::LockFreeCircleQueue<Network::CustomOverlapped*>> mOverlappedQueue;
 
-		char* mReceive_HeaderBuffer;
-		char* mReceive_BodyBuffer;
-		char* mSend_HeaderBuffer;
-		char* mSend_BodyBuffer;
+		char* mReceiveHeaderBuffer;
+		char* mReceiveBodyBuffer;
+		char* mSendHeaderBuffer;
+		char* mSendBodyBuffer;
 	};
 }

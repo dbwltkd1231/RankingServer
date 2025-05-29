@@ -97,7 +97,7 @@ namespace Network
 		}
 
 		mOverlappedQueue = std::make_shared<Utility::LockFreeCircleQueue<CustomOverlapped*>>();
-		mOverlappedQueue->Construct(200 + 1);//todo
+		mOverlappedQueue->Construct(200);
 		for (int i = 0;i < 200;++i)
 		{
 			auto overlapped = new CustomOverlapped();

@@ -33,7 +33,6 @@ namespace Network
 		~NetworkManager();
 
 		void Initialize(u_short port, int socketMax);
-
 		void Ready(std::function<void(uint32_t socketId, uint32_t boydSize, uint32_t contentsType, char* bodyBuffer)> receiveCallback);
 		void Send(int socketId, uint32_t contentsType, const char* bodyBuffer, int bodySize);
 		void Deinitialize();
