@@ -148,7 +148,7 @@ namespace Network
 		Utility::Debug("Network", "NetworkManager", "Ready Success !!");
 	}
 
-	void NetworkManager::Send(int socketId, uint32_t contentsType, const char* bodyBuffer, int bodySize)
+	void NetworkManager::Send(int socketId, uint32_t contentsType, char* bodyBuffer, int bodySize)
 	{
 		auto clientFinder = mClientMap.get()->find(socketId);
 		if (clientFinder == mClientMap->end())

@@ -7,24 +7,11 @@ namespace Network
 	{
 		mSocketId = -1;
 		mClientSocketPtr = nullptr;
-
-		mReceiveHeaderBuffer = new char[sizeof(MessageHeader)];
-		mReceiveBodyBuffer = new char[BUFFER_SIZE];
-
-		mSendHeaderBuffer = new char[sizeof(MessageHeader)];
-		mSendBodyBuffer = new char[BUFFER_SIZE];
-
 	}
 	Client::~Client()
 	{
 		mSocketId = -1;
 		mClientSocketPtr = nullptr;
-
-		delete[] mReceiveHeaderBuffer;
-		delete[] mReceiveBodyBuffer;
-
-		delete[] mSendHeaderBuffer;
-		delete[] mSendBodyBuffer;
 	}
 
 	void Client::Initialize(
@@ -53,17 +40,12 @@ namespace Network
 			return false;
 		}
 
-		memset(mReceiveHeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mReceiveBodyBuffer, 0, BUFFER_SIZE);
-
 		auto overlapped = mOverlappedQueue->pop();
-		overlapped->mOperationType = Network::OperationType::OP_ACCEPT;
-
+		overlapped->Clear();
+		overlapped->SetOperationType(Network::OperationType::OP_ACCEPT);
 		MessageHeader newHeader(mSocketId, 0, 0);
-		std::memcpy(mReceiveHeaderBuffer, &newHeader, sizeof(MessageHeader));
-		overlapped->SetHeader(mReceiveHeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mReceiveBodyBuffer, BUFFER_SIZE);
-		overlapped->hEvent = NULL;
+		overlapped->SetHeader(newHeader);
+
 		DWORD bytesReceived = 0;
 		bool result = acceptExPointer(listenSocket, *mClientSocketPtr, overlapped->mWsabuf[1].buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &bytesReceived, (CustomOverlapped*)&(*overlapped));
 
@@ -77,6 +59,7 @@ namespace Network
 		{
 			log = std::to_string(mSocketId) + " Socket Accept Ready";
 		}
+
 		Utility::Debug("Network", "Client", log);
 	}
 
@@ -92,16 +75,8 @@ namespace Network
 		}
 
 		auto overlapped = mOverlappedQueue->pop();
-		overlapped->mOperationType = Network::OperationType::OP_RECV;
-
-		memset(mReceiveHeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mReceiveBodyBuffer, 0, BUFFER_SIZE);
-		
-		MessageHeader newHeader(mSocketId, 0, 0);
-		std::memcpy(mReceiveHeaderBuffer, &newHeader, sizeof(MessageHeader));
-		overlapped->SetHeader(mReceiveHeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mReceiveBodyBuffer, BUFFER_SIZE);
-		overlapped->hEvent = NULL;
+		overlapped->Clear();
+		overlapped->SetOperationType(Network::OperationType::OP_RECV);
 
 		DWORD flags = 0;
 		int result = WSARecv(*mClientSocketPtr, overlapped->mWsabuf, 2, nullptr, &flags, &*overlapped, nullptr);
@@ -120,7 +95,7 @@ namespace Network
 		Utility::Debug("Network", "Client", log);
 	}
 
-	void Client::Send(const MessageHeader& header, const char* bodyBuffer, int bodySize)
+	void Client::Send(const MessageHeader& header, char* bodyBuffer, int bodySize)
 	{
 		if (mClientSocketPtr == nullptr || *mClientSocketPtr == INVALID_SOCKET)
 		{
@@ -128,17 +103,11 @@ namespace Network
 			return;
 		}
 
-		memset(mSendHeaderBuffer, 0, sizeof(MessageHeader));
-		memset(mSendBodyBuffer, 0, BUFFER_SIZE);
-
-		std::memcpy(mSendHeaderBuffer, &header, sizeof(MessageHeader));
-		std::memcpy(mSendBodyBuffer, bodyBuffer, bodySize);
-
 		auto overlapped = mOverlappedQueue->pop();
-		overlapped->mOperationType = Network::OperationType::OP_SEND;
-		overlapped->SetHeader(mSendHeaderBuffer, sizeof(MessageHeader));
-		overlapped->SetBody(mSendBodyBuffer, bodySize);
-		overlapped->hEvent = NULL;
+		overlapped->Clear();
+		overlapped->SetOperationType(Network::OperationType::OP_SEND);
+		overlapped->SetHeader(header);
+		overlapped->SetBody(bodyBuffer, bodySize);
 
 		DWORD flags = 0;
 		int result = WSASend(*mClientSocketPtr, overlapped->mWsabuf, 2, nullptr, flags, &*overlapped, nullptr);

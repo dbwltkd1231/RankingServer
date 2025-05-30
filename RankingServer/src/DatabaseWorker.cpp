@@ -235,7 +235,6 @@ namespace Business
     void DatabaseWorker::ScoreDataSave()
     {
         std::string tableName = "Score";
-        int timeStampStringLength = 19;
 
         std::wstring query = Utility::Converter::ConvertToSQLWCHAR(
             "MERGE INTO Score AS target "
@@ -293,7 +292,7 @@ namespace Business
 
                             SQLBindParameter(mHstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 16, 0, (SQLPOINTER)playerId.c_str(), playerId.length(), nullptr);
                             SQLBindParameter(mHstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 16, 0, &score, 0, nullptr);
-                            SQLBindParameter(mHstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, timeStampStringLength, 0, (SQLPOINTER)timestampStr.c_str(), timestampStr.length(), nullptr);
+                            SQLBindParameter(mHstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, SQL_TIMESTAMP_LENGTH, 0, (SQLPOINTER)timestampStr.c_str(), timestampStr.length(), nullptr);
 
                             SQLRETURN ret = SQLExecute(mHstmt);
                             if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)

@@ -11,6 +11,8 @@
 #include "DataStructure.h"
 #include "Log.h"
 
+#define SQL_TIMESTAMP_LENGTH 19
+
 namespace Business
 {
 	class DatabaseWorker

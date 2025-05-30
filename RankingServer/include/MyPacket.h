@@ -5,6 +5,7 @@
 #include <winsock2.h>
 #include<MSWSock.h>
 
+#define BUFFER_SIZE 1024
 
 namespace Network
 {
@@ -32,7 +33,6 @@ namespace Network
         }
     };
 
-    // buffer을 Overlapped 구조체가 직접 가지고 있을 경우 초기화 관리가 어려운것같아 Client객체에서 관리하도록 시도하였습니다.
     struct CustomOverlapped :OVERLAPPED
     {
         WSABUF mWsabuf[2];
@@ -41,22 +41,31 @@ namespace Network
 
         CustomOverlapped()
         {
+            //mWsabuf[0].buf = nullptr;
+            mWsabuf[0].buf = new char[sizeof(MessageHeader)];
+            mWsabuf[0].len = sizeof(MessageHeader);
+
+            // mWsabuf[1].buf = nullptr;
+            mWsabuf[1].buf = new char[BUFFER_SIZE];
+            mWsabuf[1].len = BUFFER_SIZE;
+
             mSocketPtr = nullptr;
-            mWsabuf[0].buf = nullptr;
-            mWsabuf[0].len = 0;
-            mWsabuf[1].buf = nullptr;
-            mWsabuf[1].len = 0;
             mOperationType = OperationType::OP_DEFAULT;
-			this->hEvent = NULL;
+            this->hEvent = NULL;
         }
 
         ~CustomOverlapped()
         {
             mSocketPtr = nullptr;
-            mWsabuf[0].buf = nullptr;
+
+            //mWsabuf[0].buf = nullptr;
+            delete[] mWsabuf[0].buf;
             mWsabuf[0].len = 0;
-            mWsabuf[1].buf = nullptr;
+
+            //mWsabuf[1].buf = nullptr;
+            delete[] mWsabuf[1].buf;
             mWsabuf[1].len = 0;
+
             mOperationType = OperationType::OP_DEFAULT;
             this->hEvent = NULL;
         }
@@ -64,8 +73,6 @@ namespace Network
         // 복사 생성자
         CustomOverlapped(const CustomOverlapped& other)
         {
-			this->hEvent = other.hEvent;
-
             if (other.mWsabuf[0].len > 0)
             {
                 mWsabuf[0].buf = other.mWsabuf[0].buf;
@@ -88,19 +95,32 @@ namespace Network
                 mWsabuf[1].len = 0;
             }
 
+            this->hEvent = other.hEvent;
             mOperationType = other.mOperationType;
         }
 
-        void SetHeader(char* headerBuffer, ULONG headerLen)
+        void SetHeader(const MessageHeader& headerData)
         {
-            mWsabuf[0].buf = headerBuffer;
-            mWsabuf[0].len = headerLen;
+            memset(mWsabuf[0].buf, 0, mWsabuf[0].len);
+
+            auto header = new MessageHeader(headerData); // 동적으로 할당
+            mWsabuf[0].buf = reinterpret_cast<char*>(header);
+            mWsabuf[0].len = sizeof(MessageHeader);
         }
 
         void SetBody(char* bodyBuffer, ULONG bodyLen)
         {
-            mWsabuf[1].buf = bodyBuffer;
+            memset(mWsabuf[1].buf, 0, bodyLen);
+
+            if (bodyLen > BUFFER_SIZE)
+            {
+                std::cerr << "Buffer overflow 위험! bodyLen이 너무 큼!" << std::endl;
+                return;
+            }
+
+            memcpy(mWsabuf[1].buf, bodyBuffer, bodyLen);
             mWsabuf[1].len = bodyLen;
+
         }
 
 		void SetOperationType(OperationType operationType)
@@ -110,10 +130,10 @@ namespace Network
 
         void Clear()
         {
-            mWsabuf[0].buf = nullptr;
-            mWsabuf[0].len = 0;
-            mWsabuf[1].buf = nullptr;
-            mWsabuf[1].len = 0;
+            memset(mWsabuf[0].buf, 0, sizeof(MessageHeader));
+            mWsabuf[0].len = sizeof(MessageHeader);
+            memset(mWsabuf[1].buf, 0, mWsabuf[1].len);
+            mWsabuf[1].len = BUFFER_SIZE;
             mOperationType = OperationType::OP_DEFAULT;
             this->hEvent = NULL;
         }

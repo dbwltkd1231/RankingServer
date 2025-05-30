@@ -63,8 +63,6 @@ namespace Network
 				std::string log = std::to_string(receivedHeader->mSocketId) + " Socket Connected Success !";
 				Utility::Debug("Network", "Session", log);
 
-				overlapped->Clear();
-				overlappedQueue->push(std::move(overlapped));
 				client->ReceiveReady();
 
 				break;
@@ -83,7 +81,6 @@ namespace Network
 				{
 					std::string log = std::to_string(completionKey) + " Socekt Disconneted OR Recv Error";
 					Utility::Debug("Network", "Session", log);
-
 				}
 				else
 				{
@@ -99,8 +96,6 @@ namespace Network
 					receiveCallback(socketId, requestBodySize, requestContentsType, overlapped->mWsabuf[1].buf);
 				}
 
-				overlapped->Clear();
-				overlappedQueue->push(std::move(overlapped));
 				client->ReceiveReady();
 				break;
 			}
@@ -115,19 +110,17 @@ namespace Network
 					Utility::Debug("Network", "Session", "Send Success");
 				}
 
-				overlapped->Clear();
-				overlappedQueue->push(std::move(overlapped));
-
 				break;
 			}
 			case OperationType::OP_DEFAULT:
 			{
-				overlapped->Clear();
-				overlappedQueue->push(std::move(overlapped));
-
+				Utility::Debug("Network", "Session", "Default");
 				break;
 			}
 			}
+
+			overlapped->Clear();
+			overlappedQueue->push(std::move(overlapped));
 		}
 	
 	}
