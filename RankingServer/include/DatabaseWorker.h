@@ -6,7 +6,7 @@
 #include <sql.h>
 #include <sqlext.h>
 
-#include <hiredis.h>
+#include <hiredis/hiredis.h>
 
 #include "DataStructure.h"
 #include "Log.h"

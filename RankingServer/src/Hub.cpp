@@ -84,7 +84,7 @@ namespace Business
 			std::this_thread::sleep_for(std::chrono::minutes(interval));
 			Utility::Debug("RankingServer", "Main", log);
 
-			// 이코드는 rankignsystem에 있는게 더좋았겠다...
+			// 이코드는 rankignsystem에 있는게 더좋았겠다...?
 			mDatabaseWorker.ScoreDataSave();
 			mDatabaseWorker.RankingUpdate();
 			mDatabaseWorker.RankingDataLoad();
